@@ -31,7 +31,7 @@
 
         <!-- Background Color -->
         <div>
-          <label for="display-background"><strong>Background Color:</strong></label>
+          <label for="display-bg"><strong>Background Color:</strong></label>
           <select name="display-status" id="display-status" data-role="slider">
             <option value=0>Black</option>
             <option value=1>White</option>
@@ -112,6 +112,7 @@
 
       // Set initial values
       $("[name=display-status]").val( $.params( "status" ) );
+      $("[name=display-bg]").val( $.params( "status" ) );
       $("[name=language]").val( $.params( "language" ) );
       $("[name=format]").val( $.params( "format" ) );
     </script>
