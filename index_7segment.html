@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>LGS Watch</title>
+    <title>7 segment</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="http://code.jquery.com/mobile/1.3.2/jquery.mobile-1.3.2.min.css" />
@@ -14,7 +14,7 @@
   <body>
     <div data-role="page" id="main">
       <div data-role="header" class="jqm-header">
-        <h1>LGS Watch</h1>
+        <h1>7 segment</h1>
       </div>
 
       <div data-role="content">
@@ -52,11 +52,8 @@
         <div>
           <label for="format"><strong>Display Format:</strong></label>
           <select name="format" id="format">
-            <option value=0 id="week" class="custom">Week</option>
-            <option value=1 id="doty" class="custom">Day of the Year</option>
-            <option value=2 id="dmy" class="custom">DD/MM/YY</option>
-            <option value=3 id="mdy" class="custom">MM/DD/YY</option>
-            <option value=4 id="wd" class="custom">Wxx Dxxx</option>
+            <option value=0 id="ddmm" class="custom">DD-MM</option>
+            <option value=1 id="mmdd" class="custom">MM-DD</option>
           </select>
           <div style="font-size: 70%; margin-left: 10px;">This option determines the information displayed on the bottom line of the watchface.</div>
         </div>
