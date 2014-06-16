@@ -99,7 +99,8 @@
         // Handle cancel button
         $("#b-cancel").click(function() {
           console.log( "Cancel" );
-          document.location = "pebblejs://close";
+          var location = "pebblejs://close#" );
+          document.location = location;
         });
 
         // Handle submit button
