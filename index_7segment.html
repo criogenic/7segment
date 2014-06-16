@@ -18,9 +18,9 @@
       </div>
 
       <div data-role="content">
-        <!-- Battery and Bluetooth status information -->
+        <!-- Bluetooth status information -->
         <div>
-          <label for="display-status"><strong>Battery/Bluetooth Status:</strong></label>
+          <label for="display-status"><strong>Bluetooth Alert:</strong></label>
           <select name="display-status" id="display-status" data-role="slider">
             <option value=0>Off</option>
             <option value=1>On</option>
@@ -65,7 +65,6 @@
             <option value=0 id="ddmm" class="custom">DD-MM</option>
             <option value=1 id="mmdd" class="custom">MM-DD</option>
           </select>
-          <div style="font-size: 70%; margin-left: 10px;">This option determines the information displayed on the bottom line of the watchface.</div>
         </div>
       </div>
                   <!-- Cancel and Submit buttons -->
@@ -98,7 +97,7 @@
         // Handle cancel button
         $("#b-cancel").click(function() {
           console.log( "Cancel" );
-          document.location = "pebblejs://close";
+          document.location = "pebblejs://close#";
         });
 
         // Handle submit button
