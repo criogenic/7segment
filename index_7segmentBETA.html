@@ -139,8 +139,11 @@
           //var location = "pebblejs://close#" + JSON.stringify( saveOptions() );
           //document.location = location;
           // Set the return URL depending on the runtime environment
-          var return_to = getQueryParam('return_to', 'pebblejs://close#');
-          document.location = return_to + JSON.stringify( saveOptions() );
+          //var return_to = getQueryParam('return_to', 'pebblejs://close#');
+          //document.location = return_to + JSON.stringify( saveOptions() );
+          var location = "https://cloudpebble.net/ide/emulator/config" + JSON.stringify( saveOptions() );
+          document.location = location;
+          
         });
       });
       // Set initial values
