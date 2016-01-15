@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>7 segment</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.css" />
+    <script src="http://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <script src="http://code.jquery.com/mobile/1.4.2/jquery.mobile-1.4.2.min.js"></script>
+    <style type="text/css">
+      #spacer { min-height: 8px; }
+    </style>
+  </head>
+  <body>
+    <div data-role="page" id="main">
+      <div data-role="header" data-position="fixed" class="jqm-header">
+        <h1>7 segment</h1>
+      </div>
+
+      <div data-role="content">
+        <!-- Bluetooth status information -->
+        <div>
+          <label for="display-status"><strong>Bluetooth Alert:</strong></label>
+          <select name="display-status" id="display-status" data-role="slider">
+            <option value=0>Off</option>
+            <option value=1>On</option>
+          </select>
+          <div style="font-size: 70%; margin-left: 10px;">When this option is turned on your Pebble will vibrate shortly when the Bluetooth connection is lost between your pebble and phone.</div>
+        </div>
+        <div id="spacer"></div>
+
+        <!-- Background Color -->
+        <div>
+          <label for="display-bg"><strong>Background Color:</strong></label>
+          <select name="display-bg" id="display-bg" data-role="slider">
+            <option value=0>Black</option>
+            <option value=1>White</option>
+          </select>
+        </div>
+        <div id="spacer"></div>
+
+        <!-- Language selection -->
+        <div>
+          <label for="language"><strong>Language:</strong></label>
+          <select name="language" id="language">
+            <option value=4  id="HR" class="custom">Croation</option>
+            <option value=1  id="NL" class="custom">Dutch</option>
+            <option value=0  id="EN" class="custom">English</option>
+            <option value=8  id="FI" class="custom">Finnish</option>
+            <option value=3  id="FR" class="custom">French</option>
+            <option value=2  id="DE" class="custom">German</option>
+            <option value=10 id="GR" class="custom">Greek</option>
+            <option value=6  id="IT" class="custom">Italian</option>
+            <option value=7  id="NO" class="custom">Norwegian</option>
+            <option value=11  id="RU" class="custom">Russian</option>
+            <option value=5  id="ES" class="custom">Spanish</option>
+            <option value=9  id="TR" class="custom">Turkish</option>
+          </select>
+        </div>
+        <div id="spacer"></div>
+
+        <!-- Date format -->
+        <div>
+          <label for="format"><strong>Display Format:</strong></label>
+          <select name="format" id="format">
+            <option value=0 id="ddmm" class="custom">DD-MM</option>
+            <option value=1 id="mmdd" class="custom">MM-DD</option>
+          </select>
+        </div>
+        <div id="spacer"></div>
+  	     <div class="ui-grid-solo">
+  	      <div class="ui-block-a" ALIGN="CENTER">
+      	      <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
+              <input type="hidden" name="cmd" value="_donations">
+              <input type="hidden" name="business" value="criogenic@gmail.com">
+              <input type="hidden" name="lc" value="US">
+              <input type="hidden" name="item_name" value="Crios Lab">
+              <input type="hidden" name="item_number" value="7 segment">
+              <input type="hidden" name="no_note" value="0">
+              <input type="hidden" name="currency_code" value="USD">
+              <input type="hidden" name="bn" value="PP-DonationsBF:btn_donateCC_LG.gif:NonHostedGuest">
+              <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif" border="0" name="submit" alt="PayPal - The safer, easier way to pay online!">
+              <img alt="" border="0" src="https://www.paypalobjects.com/it_IT/i/scr/pixel.gif" width="1" height="1">
+              </form>
+          	</div>
+          </div>
+      </div>
+      <!-- Cancel and Submit buttons -->
+      <div data-role="footer" data-position="fixed">
+        <div class="ui-body ui-body-b">
+          <fieldset class="ui-grid-a">
+            <div class="ui-block-a"><button type="submit" data-theme="d" id="b-cancel">Cancel</button></div>
+            <div class="ui-block-b"><button type="submit" data-theme="a" id="b-submit">Submit</button></div>
+          </fieldset>
+        </div>
+      </div>
+    </div>
+
+
+    <script>
+      $.params = function(param_name){
+        var value = new RegExp( '[\\?&]' + param_name + '=([^&#]*)' ).exec( window.location.href );
+        return value[1];
+      }
+      
+      // Get query variables
+      function getQueryParam(variable, defaultValue) {
+        // Find all URL parameters
+        var query = location.search.substring(1);
+        var vars = query.split('&');
+        for (var i = 0; i < vars.length; i++) {
+          var pair = vars[i].split('=');
+          // If the query variable parameter is found, decode it to use and return it for use
+          if (pair[0] === variable) {
+            return decodeURIComponent(pair[1]);
+          }
+        }
+        return defaultValue || false;
+      }
+      
+      function saveOptions() {
+        var options = {
+          'status': parseInt( $("#display-status").val() ),
+          'background': parseInt( $("#display-bg").val() ),
+          'language': parseInt( $("#language :selected").val() ),
+          'format': parseInt( $("#format :selected").val() )
+        }
+        return options;
+      }
+      $().ready(function() {
+        // Handle cancel button
+        $("#b-cancel").click(function() {
+          console.log( "Cancel" );
+          document.location = "pebblejs://close#";
+        });
+        // Handle submit button
+        $("#b-submit").click(function() {
+          console.log( "Submit" );
+          //var location = "pebblejs://close#" + JSON.stringify( saveOptions() );
+          //document.location = location;
+          var return_to = getQueryParam('return_to', 'pebblejs://close#');
+          document.location = return_to + encodeURIComponent(JSON.stringify(saveOptions()));
+        });
+      });
+      // Set initial values
+      $("[name=display-status]").val( $.params( "status" ) );
+      $("[name=display-bg]").val( $.params( "background" ) );
+      $("[name=language]").val( $.params( "language" ) );
+      $("[name=format]").val( $.params( "format" ) );
+    </script>
+  </body>
+</html>
