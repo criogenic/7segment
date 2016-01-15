@@ -139,7 +139,7 @@
           //var location = "pebblejs://close#" + JSON.stringify( saveOptions() );
           //document.location = location;
           var return_to = getQueryParam('return_to', 'pebblejs://close#');
-          document.location = return_to + encodeURIComponent(JSON.stringify(saveOptions()));
+          document.location = return_to + JSON.stringify(saveOptions());
         });
       });
       // Set initial values
