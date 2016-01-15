@@ -140,7 +140,7 @@
           //document.location = location;
           // Set the return URL depending on the runtime environment
           var return_to = getQueryParam('return_to', 'pebblejs://close#');
-          document.location.href = return_to + encodeURIComponent(JSON.stringify(config));
+          document.location.href = return_to + encodeURIComponent(JSON.stringify(saveOptions()));
         });
       });
       // Set initial values
