@@ -20,18 +20,13 @@
       <div data-role="content">
         <!-- Bluetooth status information -->
         <div>
-        <form>
-          <fieldset data-role="controlgroup" data-iconpos="right" name="display-status" id="display-status" >
-            <legend>Bluetooth Alert:</legend>
-            <input type="radio" name="radio-choice-w-6" id="radio-choice-w-6a" value="0" checked="checked">
-            <label for="radio-choice-w-6a">Off</label>
-            <input type="radio" name="radio-choice-w-6" id="radio-choice-w-6b" value="1">
-            <label for="radio-choice-w-6b">Vibes</label>
-            <input type="radio" name="radio-choice-w-6" id="radio-choice-w-6c" value="2">
-            <label for="radio-choice-w-6c">Vibes & invert color</label>
-          </fieldset>
-        </form>
-        <div style="font-size: 70%; margin-left: 10px;">When this option is turned on your Pebble will vibrate shortly when the Bluetooth connection is lost between your pebble and phone.</div>
+        <label for="display-status"><strong>Bluetooth Alert:</strong></label>
+            <select name="display-status" id="display-status" data-role="slider">
+              <option value=0>Off</option>
+              <option value=1>On</option>
+              <option value=1>On & Invert Color</option>
+            </select>
+          <div style="font-size: 70%; margin-left: 10px;">When this option is turned on your Pebble will vibrate shortly when the Bluetooth connection is lost between your pebble and phone.</div>
         </div>
         <div id="spacer"></div>
 
