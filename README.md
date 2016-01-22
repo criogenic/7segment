@@ -1,2 +1,2 @@
-7segment
+7segment config HTTP files
 ========
