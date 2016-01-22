@@ -30,16 +30,6 @@
         </div>
         <div id="spacer"></div>
 
-        <!-- Background Color -->
-        <div>
-          <label for="display-bg"><strong>Watchface Colors:</strong></label>
-          <select name="display-bg" id="display-bg" data-role="slider">
-            <option value=0>Normal</option>
-            <option value=1>Inverse</option>
-          </select>
-        </div>
-        <div id="spacer"></div>
-
         <!-- Language selection -->
         <div>
           <label for="language"><strong>Language:</strong></label>
@@ -67,6 +57,15 @@
           <select name="format" id="format">
             <option value=0 id="ddmm" class="custom">DD-MM</option>
             <option value=1 id="mmdd" class="custom">MM-DD</option>
+          </select>
+        </div>
+        <div id="spacer"></div>
+        <!-- Background Color -->
+        <div>
+          <label for="display-bg"><strong>Watchface Colors:</strong></label>
+          <select name="display-bg" id="display-bg" data-role="slider">
+            <option value=0>Normal</option>
+            <option value=1>Inverse</option>
           </select>
         </div>
         <div id="spacer"></div>
@@ -157,6 +156,8 @@
       $("[name=display-bg]").val( $.params( "background" ) );
       $("[name=language]").val( $.params( "language" ) );
       $("[name=format]").val( $.params( "format" ) );
+      $("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
+      $("[name=textcolor]").val( $.params( "textcolor" ) );
     </script>
   </body>
 </html>
