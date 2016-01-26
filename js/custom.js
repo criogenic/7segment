@@ -7,6 +7,7 @@ var arrColors = [
         "#55AA00", "#55AA55", "#55AAAA", "#55AAFF", "#55FF00", "#55FF55", "#55FFAA", "#55FFFF",
         "#AAAA00", "#AAAA55", "#AAAAAA", "#AAAAFF", "#AAFF00", "#AAFF55", "#AAFFAA", "#AAFFFF",
         "#FFAA00", "#FFAA55", "#FFAAAA", "#FFAAFF", "#FFFF00", "#FFFF55", "#FFFFAA", "#FFFFFF"];
+
 $.params = function(param_name){
   var value = new RegExp( '[\\?&]' + param_name + '=([^&#]*)' ).exec( window.location.href );
   return value[1];
@@ -54,11 +55,12 @@ $().ready(function() {
   });
 
   // Setup Spectrum picker with Pebble Time Palette
-	$(".colorpicker").spectrum({
+  $(".colorpicker").spectrum({
+    allowEmpty: true,
     showPaletteOnly: true,
-    hideAfterPaletteSelect:true,
     preferredFormat: "hex3",
-    change: function(color){
+    hideAfterPaletteSelect: true,
+    change: function(color) {
     },
     palette: [
       [ '000', '005', '00a', '00f', '050', '055', '05a', '05f' ],
