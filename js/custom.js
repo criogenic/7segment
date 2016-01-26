@@ -58,8 +58,7 @@ $().ready(function() {
     showPaletteOnly: true,
     hideAfterPaletteSelect:true,
     preferredFormat: "hex3",
-    change: function() {
-      draw();
+    change: function(color){
     },
     palette: [
       [ '000', '005', '00a', '00f', '050', '055', '05a', '05f' ],
