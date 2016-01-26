@@ -179,17 +179,7 @@
           ]
         ]
       });
-        
-      // Set initial values
-      $("[name=display-status]").val( getQueryParam("status" , 0) );
-      $("[name=display-bg]").val( getQueryParam("background" , 0) );
-      $("[name=language]").val( getQueryParam( "language" , 0) );
-      $("[name=format]").val( getQueryParam( "format" , 0 ) );
-      //$("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
-      //$("[name=textcolor]").val( $.params( "textcolor" ) );
-      //$("#bkg-color").spectrum({ color: arrColors[63] });
-        
-        
+
       // Handle cancel button
       $("#b-cancel").click(function() {
         console.log( "Cancel" );
@@ -206,6 +196,17 @@
       
      
     });
+    
+            
+    // Set initial values
+    $("[name=display-status]").val( getQueryParam("status" , 0) );
+    $("[name=display-bg]").val( getQueryParam("background" , 0) );
+    $("[name=language]").val( getQueryParam( "language" , 0) );
+    $("[name=format]").val( getQueryParam( "format" , 0 ) );
+    //$("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
+    //$("[name=textcolor]").val( $.params( "textcolor" ) );
+    //$("#bkg-color").spectrum({ color: arrColors[63] });
+        
     </script>
   </body>
 </html>
