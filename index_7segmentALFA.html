@@ -116,27 +116,6 @@
   <script src="http://code.jquery.com/jquery-2.2.0.min.js"></script>
   <script src="http://code.jquery.com/mobile/1.4.5/jquery.mobile-1.4.5.min.js"></script>
   <script src="js/spectrum.js"></script>
-  <script>
-      $(".colorpicker").spectrum({
-      allowEmpty: true,
-      showPaletteOnly: true,
-      preferredFormat: "hex",
-      hideAfterPaletteSelect: true,
-      change: function(color) {
-      },
-      palette: [
-        ["#000000", "#000055", "#0000AA", "#0000FF", "#005500", "#005555", "#0055AA", "#0055FF",
-        "#550000", "#550055", "#5500AA", "#5500FF", "#555500", "#555555", "#5555AA", "#5555FF",
-        "#AA0000", "#AA0055", "#AA00AA", "#AA00FF", "#AA5500", "#AA5555", "#AA55AA", "#AA55FF",
-        "#FF0000", "#FF0055", "#FF00AA", "#FF00FF", "#FF5500", "#FF5555", "#FF55AA", "#FF55FF",
-        "#00AA00", "#00AA55", "#00AAAA", "#00AAFF", "#00FF00", "#00FF55", "#00FFAA", "#00FFFF",
-        "#55AA00", "#55AA55", "#55AAAA", "#55AAFF", "#55FF00", "#55FF55", "#55FFAA", "#55FFFF",
-        "#AAAA00", "#AAAA55", "#AAAAAA", "#AAAAFF", "#AAFF00", "#AAFF55", "#AAFFAA", "#AAFFFF",
-        "#FFAA00", "#FFAA55", "#FFAAAA", "#FFAAFF", "#FFFF00", "#FFFF55", "#FFFFAA", "#FFFFFF"
-        ]
-      ]
-    });
-  </script>
     <script>
       var arrColors = [
         "#000000", "#000055", "#0000AA", "#0000FF", "#005500", "#005555", "#0055AA", "#0055FF",
@@ -178,28 +157,46 @@
       }
       
       $().ready(function() {
+        
         // Handle cancel button
         $("#b-cancel").click(function() {
           console.log( "Cancel" );
           document.location = "pebblejs://close#";
         });
+        
         // Handle submit button
         $("#b-submit").click(function() {
           console.log( "Submit" );
-          //var location = "pebblejs://close#" + JSON.stringify( saveOptions() );
-          //document.location = location;
           // Set the return URL depending on the runtime environment
           var return_to = getQueryParam('return_to', 'pebblejs://close#');
           document.location.href = return_to + encodeURIComponent(JSON.stringify(saveOptions()));
         });
+        
         var appstatus = $.params( "appstatus" );
         if (appstatus < 3){
           $("[name=color_section]").hide();
         }
         
-        
-        
+      $(".colorpicker").spectrum({
+        allowEmpty: true,
+        showPaletteOnly: true,
+        preferredFormat: "hex",
+        hideAfterPaletteSelect: true,
+        change: function(color) {},
+        palette: [
+          ["#000000", "#000055", "#0000AA", "#0000FF", "#005500", "#005555", "#0055AA", "#0055FF",
+          "#550000", "#550055", "#5500AA", "#5500FF", "#555500", "#555555", "#5555AA", "#5555FF",
+          "#AA0000", "#AA0055", "#AA00AA", "#AA00FF", "#AA5500", "#AA5555", "#AA55AA", "#AA55FF",
+          "#FF0000", "#FF0055", "#FF00AA", "#FF00FF", "#FF5500", "#FF5555", "#FF55AA", "#FF55FF",
+          "#00AA00", "#00AA55", "#00AAAA", "#00AAFF", "#00FF00", "#00FF55", "#00FFAA", "#00FFFF",
+          "#55AA00", "#55AA55", "#55AAAA", "#55AAFF", "#55FF00", "#55FF55", "#55FFAA", "#55FFFF",
+          "#AAAA00", "#AAAA55", "#AAAAAA", "#AAAAFF", "#AAFF00", "#AAFF55", "#AAFFAA", "#AAFFFF",
+          "#FFAA00", "#FFAA55", "#FFAAAA", "#FFAAFF", "#FFFF00", "#FFFF55", "#FFFFAA", "#FFFFFF"
+          ]
+        ]
       });
+     
+    });
       // Set initial values
       $("[name=display-status]").val( $.params( "status" ) );
       $("[name=display-bg]").val( $.params( "background" ) );
