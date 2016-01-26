@@ -279,25 +279,24 @@ $( document ).ready(function() {
 
 $( window ).load(function() {
   console.log( "window loaded" );
-      // Set initial values
-  //$("[name=display-status]").val( getQueryParam("status" , 0) );
-  $("[name=display-status]").selectedIndex = getQueryParam("status" , 0);
-  console.log( "Get status " + getQueryParam("status" , 0));
-  
-  //$("[name=display-bg]").val( getQueryParam("background" , 0) );
-  $("[name=display-bg]").selectedIndex = getQueryParam("background" , 0);
-  console.log( "Get background " + getQueryParam("background" , 0));
-  
-  //$("[name=language]").val( getQueryParam( "language" , 0) );
-  $("[name=language]").selectedIndex = getQueryParam("language" , 0);
-  console.log( "Get language " + getQueryParam("language" , 0));
-  
-  //$("[name=format]").val( getQueryParam( "format" , 0 ) );
-  $("[name=format]").selectedIndex = getQueryParam("format" , 0);
-  console.log( "Get format " + getQueryParam("format" , 0));
+
   
   //$("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
   //$("[name=textcolor]").val( $.params( "textcolor" ) );
   //$("#bkg-color").spectrum("set", GColor.toStrHex( getQueryParam( "backgroundcolor" , 0 ) ) );
-  $("#bkg-color").spectrum("set","#AAAAAA");
+  $("#bkg-color").spectrum("set",GColor.toStrHex( getQueryParam( "backgroundcolor" , 0 ) ));
+  $("#text-color").spectrum("set",GColor.toStrHex( getQueryParam( "textcolor" , 0 ) ));
 });
+
+// Set initial values
+$("[name=display-status]").val( getQueryParam("status" , 0) );
+console.log( "Get status " + getQueryParam("status" , 0));
+
+$("[name=display-bg]").val( getQueryParam("background" , 0) );
+console.log( "Get background " + getQueryParam("background" , 0));
+
+$("[name=language]").val( getQueryParam( "language" , 0) );
+console.log( "Get language " + getQueryParam("language" , 0));
+
+$("[name=format]").val( getQueryParam( "format" , 0 ) );
+console.log( "Get format " + getQueryParam("format" , 0));
