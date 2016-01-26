@@ -71,7 +71,7 @@
         </div>
         <div id="spacer"></div>
         <!-- Colorpicker-->
-        <div>
+        <div name="color_section">
           <label>Time Text Color</label>
           <input type='text' id="time-color" class="colorpicker"/>
         </div>
@@ -181,6 +181,8 @@
           var return_to = getQueryParam('return_to', 'pebblejs://close#');
           document.location.href = return_to + encodeURIComponent(JSON.stringify(saveOptions()));
         });
+        $("[name=color_section]").hide();
+        
       });
       // Set initial values
       $("[name=display-status]").val( $.params( "status" ) );
