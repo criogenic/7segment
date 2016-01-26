@@ -8,10 +8,6 @@ var arrColors = [
         "#AAAA00", "#AAAA55", "#AAAAAA", "#AAAAFF", "#AAFF00", "#AAFF55", "#AAFFAA", "#AAFFFF",
         "#FFAA00", "#FFAA55", "#FFAAAA", "#FFAAFF", "#FFFF00", "#FFFF55", "#FFFFAA", "#FFFFFF"];
 
-$.params = function(param_name){
-  var value = new RegExp( '[\\?&]' + param_name + '=([^&#]*)' ).exec( window.location.href );
-  return value[1];
-};
 function saveOptions() {
   var options = {
     'status': parseInt( $("#display-status").val() ),
