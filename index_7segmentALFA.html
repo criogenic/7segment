@@ -127,10 +127,6 @@
         "#AAAA00", "#AAAA55", "#AAAAAA", "#AAAAFF", "#AAFF00", "#AAFF55", "#AAFFAA", "#AAFFFF",
         "#FFAA00", "#FFAA55", "#FFAAAA", "#FFAAFF", "#FFFF00", "#FFFF55", "#FFFFAA", "#FFFFFF"
       ];
-      $.params = function(param_name){
-        var value = new RegExp( '[\\?&]' + param_name + '=([^&#]*)' ).exec( window.location.href );
-        return value[1];
-      }
       function saveOptions() {
         var options = {
           'status': parseInt( $("#display-status").val() ),
@@ -198,12 +194,12 @@
      
     });
       // Set initial values
-      $("[name=display-status]").val( $.params( "status" ) );
-      $("[name=display-bg]").val( $.params( "background" ) );
-      $("[name=language]").val( $.params( "language" ) );
-      $("[name=format]").val( $.params( "format" ) );
-      $("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
-      $("[name=textcolor]").val( $.params( "textcolor" ) );
+      $("[name=display-status]").val( getQueryParam(status , 0) );
+      $("[name=display-bg]").val( $.params( getQueryParam(background , 0) );
+      $("[name=language]").val( getQueryParam( language , 0) );
+      $("[name=format]").val(getQueryParam( format , 0 ) );
+      //$("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
+      //$("[name=textcolor]").val( $.params( "textcolor" ) );
       //$("#bkg-color").spectrum({ color: arrColors[63] });
     </script>
   </body>
