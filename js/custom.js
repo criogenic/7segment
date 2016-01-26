@@ -37,6 +37,15 @@ $().ready(function() {
     document.location.href = return_to + encodeURIComponent(JSON.stringify(saveOptions()));
   });      
   alert(GColor.toStrHex( 192 ));
+  // Set initial values
+  $("[name=display-status]").val( getQueryParam("status" , 0) );
+  $("[name=display-bg]").val( getQueryParam("background" , 0) );
+  $("[name=language]").val( getQueryParam( "language" , 0) );
+  $("[name=format]").val( getQueryParam( "format" , 0 ) );
+  //$("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
+  //$("[name=textcolor]").val( $.params( "textcolor" ) );
+  //$("#bkg-color").spectrum("set", GColor.toStrHex( getQueryParam( "backgroundcolor" , 0 ) ) );
+  $("#bkg-color").spectrum("set","#AAAAAA");
 });
 
 var arrColors = [
@@ -272,15 +281,3 @@ var GColor = (function() {
         return mappingSunny[hex.toLowerCase()];
     }
 }());
-
-// Set initial values
-$("[name=display-status]").val( getQueryParam("status" , 0) );
-$("[name=display-bg]").val( getQueryParam("background" , 0) );
-$("[name=language]").val( getQueryParam( "language" , 0) );
-$("[name=format]").val( getQueryParam( "format" , 0 ) );
-//$("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
-//$("[name=textcolor]").val( $.params( "textcolor" ) );
-//$("#bkg-color").spectrum("set", GColor.toStrHex( getQueryParam( "backgroundcolor" , 0 ) ) );
-$("#bkg-color").spectrum("set","#AAAAAA");
-
-
