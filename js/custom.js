@@ -36,12 +36,15 @@ $().ready(function() {
     var return_to = getQueryParam('return_to', 'pebblejs://close#');
     document.location.href = return_to + encodeURIComponent(JSON.stringify(saveOptions()));
   });      
-  alert(GColor.toStrHex( 192 ));
   // Set initial values
   $("[name=display-status]").val( getQueryParam("status" , 0) );
+  console.log( "Get status " + getQueryParam("status" , 0));
   $("[name=display-bg]").val( getQueryParam("background" , 0) );
+  console.log( "Get background " + getQueryParam("background" , 0));
   $("[name=language]").val( getQueryParam( "language" , 0) );
+  console.log( "Get language " + getQueryParam("language" , 0));
   $("[name=format]").val( getQueryParam( "format" , 0 ) );
+   console.log( "Get format " + getQueryParam("format" , 0));
   //$("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
   //$("[name=textcolor]").val( $.params( "textcolor" ) );
   //$("#bkg-color").spectrum("set", GColor.toStrHex( getQueryParam( "backgroundcolor" , 0 ) ) );
