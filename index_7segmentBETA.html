@@ -181,7 +181,11 @@
           var return_to = getQueryParam('return_to', 'pebblejs://close#');
           document.location.href = return_to + encodeURIComponent(JSON.stringify(saveOptions()));
         });
-        $("[name=color_section]").hide();
+        var appstatus = $.params( "appstatus" );
+        if (appstatus < 3){
+          $("[name=color_section]").hide();
+        }
+        
         
       });
       // Set initial values
