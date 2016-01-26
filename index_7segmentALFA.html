@@ -168,7 +168,7 @@
           document.location.href = return_to + encodeURIComponent(JSON.stringify(saveOptions()));
         });
         
-        var appstatus = $.params( "appstatus" );
+        var appstatus = getQueryParam( appstatus , 0 );
         if (appstatus < 3){
           $("[name=color_section]").hide();
         }
