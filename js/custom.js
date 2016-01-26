@@ -281,5 +281,8 @@ $("[name=language]").val( getQueryParam( "language" , 0) );
 $("[name=format]").val( getQueryParam( "format" , 0 ) );
 //$("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
 //$("[name=textcolor]").val( $.params( "textcolor" ) );
-$("#bkg-color").spectrum("set", GColor.toStrHex( getQueryParam( "backgroundcolor" , 0 ) ) );
+//$("#bkg-color").spectrum("set", GColor.toStrHex( getQueryParam( "backgroundcolor" , 0 ) ) );
+$("#bkg-color").spectrum({
+    color: GColor.toStrHex( 192 )
+}); 
 
