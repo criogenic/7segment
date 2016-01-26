@@ -286,13 +286,13 @@ $( window ).load(function() {
   //$("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
   //$("[name=textcolor]").val( $.params( "textcolor" ) );
   //$("#bkg-color").spectrum("set", GColor.toStrHex( getQueryParam( "backgroundcolor" , 0 ) ) );
-  $("#bkg-color").spectrum("set",GColor.toStrHex( getQueryParam( "backgroundcolor" , 0 ) ));
-  $("#text-color").spectrum("set",GColor.toStrHex( getQueryParam( "textcolor" , 0 ) ));
+  $("#bkg-color").spectrum("set",GColor.toStrHex( getQueryParam( "backgroundcolor" , "#FFFFFF" ) ));
+  $("#text-color").spectrum("set",GColor.toStrHex( getQueryParam( "textcolor" , "#000000" ) ));
 });
 
 // Set initial values
-$("[name=display-status]").val( getQueryParam("status" , 0) );
-console.log( "Get status " + getQueryParam("status" , 0));
+$("[name=display-status]").val( getQueryParam("status" , 1) );
+console.log( "Get status " + getQueryParam("status" , 1));
 
 $("[name=display-bg]").val( getQueryParam("background" , 0) );
 console.log( "Get background " + getQueryParam("background" , 0));
