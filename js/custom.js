@@ -146,6 +146,8 @@ var GColor = (function() {
     return {
         fromHex: GColorFromHex,
         toHex: GColorToHex,
+        fromStrHex: GColorFromStrHex,
+        toStrHex: GColorToStrHex,
         toName: GColorName,
         shortHex: GColorShortHex,
         expandHex: GColorExpandHex,
@@ -237,6 +239,14 @@ var GColor = (function() {
         return hexString.toUpperCase();
     }
 
+    function GColorFromStrHex(hex) {
+        return GColorFromHex(hex.substring(1));
+    }
+
+    function GColorToStrHex(color) {
+        return "#" + GColorToHex(color);
+    }
+
     function GColorName(color) {
         var names = Object.keys(GColor);
         for (var n = 0; n < names.length; n += 1) {
@@ -271,4 +281,4 @@ $("[name=language]").val( getQueryParam( "language" , 0) );
 $("[name=format]").val( getQueryParam( "format" , 0 ) );
 //$("[name=backgroundcolor]").val( $.params( "backgroundcolor" ) );
 //$("[name=textcolor]").val( $.params( "textcolor" ) );
-//$("#bkg-color").spectrum({ color: arrColors[63] });
+$("#bkg-color").spectrum({ color: GColor.toStrHex( getQueryParam( "backgroundcolor" , 0 ) ) });
