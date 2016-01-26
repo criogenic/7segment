@@ -10,7 +10,6 @@ $().ready(function() {
     showPaletteOnly: true,
     preferredFormat: "hex",
     hideAfterPaletteSelect: true,
-    change: function(color) {},
     palette: [
       ["#000000", "#000055", "#0000AA", "#0000FF", "#005500", "#005555", "#0055AA", "#0055FF",
       "#550000", "#550055", "#5500AA", "#5500FF", "#555500", "#555555", "#5555AA", "#5555FF",
