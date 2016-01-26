@@ -36,7 +36,7 @@ $().ready(function() {
     var return_to = getQueryParam('return_to', 'pebblejs://close#');
     document.location.href = return_to + encodeURIComponent(JSON.stringify(saveOptions()));
   });      
-
+  alert(GColor.toStrHex( 192 ));
 });
 
 var arrColors = [
@@ -284,4 +284,5 @@ $("[name=format]").val( getQueryParam( "format" , 0 ) );
 $("#bkg-color").spectrum({
     color: GColor.toStrHex( 192 )
 }); 
+
 
