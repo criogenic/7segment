@@ -55,7 +55,9 @@ function saveOptions() {
     'status': parseInt( $("#display-status").val() ),
     'background': parseInt( $("#display-bg").val() ),
     'language': parseInt( $("#language :selected").val() ),
-    'format': parseInt( $("#format :selected").val() )
+    'format': parseInt( $("#format :selected").val() ),
+    'backgroundcolor': parseInt( GColor.fromStrHex($("#bkg-color").spectrum("get").toHexString()) ),
+    'textcolor': parseInt( GColor.fromStrHex($("#text-color").spectrum("get").toHexString()) )
   }
   return options;
 }
