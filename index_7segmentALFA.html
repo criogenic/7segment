@@ -187,7 +187,7 @@
       var pair = vars[i].split('=');
       // If the query variable parameter is found, decode it to use and return it for use
       if (pair[0] === variable) {
-        if( !(jQuery.isNumeric(decodeURIComponent(pair[1])))){
+        if( jQuery.isNumeric(decodeURIComponent(pair[1]))){
           return decodeURIComponent(pair[1]);
         }
       }
