@@ -156,8 +156,8 @@
       document.location.href = return_to + encodeURIComponent(JSON.stringify(saveOptions()));
     });
     
-    $("#bkg-color").spectrum("set",GColor.toStrHex( getQueryParam( "backgroundcolor" , "#FFFFFF" ) ));
-    $("#text-color").spectrum("set",GColor.toStrHex( getQueryParam( "textcolor" , "#000000" ) ));
+    $("#bkg-color").spectrum("set",GColor.toStrHex( getQueryValue( "backgroundcolor" , 192 ) ));
+    $("#text-color").spectrum("set",GColor.toStrHex( getQueryValue( "textcolor" , 255 ) ));
     $("#main").show();
   });
   
@@ -176,6 +176,22 @@
     return defaultValue || false;
   }
   
+    // And finally, the actual pebble configuration stuff
+  function getQueryValue(variable, defaultValue) {
+    // Find all URL parameters
+    var query = location.search.substring(1);
+    var vars = query.split('&');
+    for (var i = 0; i < vars.length; i++) {
+      var pair = vars[i].split('=');
+      // If the query variable parameter is found, decode it to use and return it for use
+      if (pair[0] === variable) {
+        if (decodeURIComponent(pair[1]) === parseInt(decodeURIComponent(pair[1]), 10)){
+          return decodeURIComponent(pair[1]);
+        }
+      }
+    }
+    return defaultValue || false;
+  }
   
   function saveOptions() {
     var options = {
@@ -190,17 +206,17 @@
   }
   
     // Set initial values
-  $("[name=display-status]").val( getQueryParam("status" , 1) );
-  console.log( "Get status " + getQueryParam("status" , 1));
+  $("[name=display-status]").val( getQueryValue("status" , 1) );
+  console.log( "Get status " + getQueryValue("status" , 1));
   
-  $("[name=display-bg]").val( getQueryParam("background" , 0) );
-  console.log( "Get background " + getQueryParam("background" , 0));
+  $("[name=display-bg]").val( getQueryValue("background" , 0) );
+  console.log( "Get background " + getQueryValue("background" , 0));
   
-  $("[name=language]").val( getQueryParam( "language" , 0) );
-  console.log( "Get language " + getQueryParam("language" , 0));
+  $("[name=language]").val( getQueryValue( "language" , 0) );
+  console.log( "Get language " + getQueryValue("language" , 0));
   
-  $("[name=format]").val( getQueryParam( "format" , 0 ) );
-  console.log( "Get format " + getQueryParam("format" , 0));
+  $("[name=format]").val( getQueryValue( "format" , 0 ) );
+  console.log( "Get format " + getQueryValue("format" , 0));
   </script>
   </body>
 </html>
