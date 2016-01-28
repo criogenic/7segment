@@ -161,6 +161,9 @@
     $("#bkg-color").spectrum("set",GColor.toStrHex( getQueryValue( "backgroundcolor" , 192 ) ));
     $("#text-color").spectrum("set",GColor.toStrHex( getQueryValue( "textcolor" , 255 ) ));
     $("#main").show();
+    
+    $('.result').html( location.search.substring(1) );
+    
   });
   
   // And finally, the actual pebble configuration stuff
