@@ -72,9 +72,8 @@
         <div id="spacer"></div>
         <!-- Weather -->
         <div class="ui-grid-a">
-         <div class="ui-block-a">
-           <label><strong>Weather:</strong></label>
-           <a href="https://www.yahoo.com/?ilc=401"><img src="https://poweredby.yahoo.com/purple_retina.png" width="134" height="21"></a>
+         <div class="ui-block-a ui-block-b">
+           <label for="weastatus"><strong>Weather:</strong></label>
            <select name="weastatus" id="weastatus">
             <option value=0>OFF</option>
             <option value=10>ON every 10 min</option>
@@ -85,7 +84,7 @@
             <option value=360>ON every 6 hours</option>
           </select>
          </div>
-         <div class="ui-block-b">
+         <div class="ui-block-c">
            <label for="weaformat"><strong>Format:</strong></label>
            <select name="weaformat" id="weaformat" data-role="slider">
             <option value=0 selected >°C</option>
