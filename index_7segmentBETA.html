@@ -71,11 +71,10 @@
         </div>
         <div id="spacer"></div>
         <!-- Weather -->
-        
-          <fieldset class="ui-grid-b">
-          <div class="ui-block-a">
-          <label for="weastatus"><strong>Weather:</strong></label>
-          <select name="weastatus" id="weastatus">
+        <div class="ui-grid-a">
+         <div class="ui-block-a"><div class="ui-bar ui-bar-a" style="height:60px">
+           <label for="weastatus"><strong>Weather:</strong></label>
+           <select name="weastatus" id="weastatus">
             <option value=0>OFF</option>
             <option value=10>ON every 10 min</option>
             <option value=30  selected >ON every 30 min</option>
@@ -84,16 +83,15 @@
             <option value=240>ON every 4 hours</option>
             <option value=360>ON every 6 hours</option>
           </select>
-          </div>
-          <div class="ui-block-b">
-          <label for="weaformat"><strong>Weather Format:</strong></label>
-          <select name="weaformat" id="weaformat" data-role="slider">
+         </div></div>
+         <div class="ui-block-b"><div class="ui-bar ui-bar-a" style="height:60px">
+           <label for="weaformat"><strong>Format:</strong></label>
+           <select name="weaformat" id="weaformat" data-role="slider">
             <option value=0 selected >°C</option>
             <option value=1>°F</option>
-          </select>
-        </div>
-          </fieldset>
-        
+           </select>
+         </div></div>
+        </div><!-- /grid-a -->
         <div id="spacer"></div>
         <!-- Colorpicker-->
         <div class="ui-body ui-body-a" name="color_section">
