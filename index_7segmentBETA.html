@@ -71,18 +71,29 @@
         </div>
         <div id="spacer"></div>
         <!-- Weather -->
-        <div>
+        
+          <fieldset class="ui-grid-b">
+          <div>
           <label for="weastatus"><strong>Weather:</strong></label>
           <select name="weastatus" id="weastatus">
-            <option value=0>Weather OFF</option>
-            <option value=10>Weather ON every 10 min</option>
-            <option value=30  selected >Weather ON every 30 min</option>
-            <option value=60>Weather ON every 1 hour</option>
-            <option value=120>Weather ON every 2 hours</option>
-            <option value=240>Weather ON every 4 hours</option>
-            <option value=360>Weather ON every 6 hours</option>
+            <option value=0>OFF</option>
+            <option value=10>ON every 10 min</option>
+            <option value=30  selected >ON every 30 min</option>
+            <option value=60>ON every 1 hour</option>
+            <option value=120>ON every 2 hours</option>
+            <option value=240>ON every 4 hours</option>
+            <option value=360>ON every 6 hours</option>
+          </select>
+          </div>
+        <div>
+          <label for="weaformat"><strong>Watchface Colors:</strong></label>
+          <select name="weaformat" id="weaformat" data-role="slider">
+            <option value=0 selected >°C</option>
+            <option value=1>°F</option>
           </select>
         </div>
+          </fieldset>
+        
         <div id="spacer"></div>
         <!-- Colorpicker-->
         <div class="ui-body ui-body-a" name="color_section">
