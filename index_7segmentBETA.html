@@ -209,6 +209,7 @@
       'language': parseInt( $("#language :selected").val() ),
       'format': parseInt( $("#format :selected").val() ),
       'weastatus': parseInt( $("#weastatus :selected").val() ),
+      'weaformat': parseInt( $("#weaformat).val() ),
       'backgroundcolor': parseInt( GColor.fromStrHex($("#bkg-color").spectrum("get").toHexString()) ),
       'textcolor': parseInt( GColor.fromStrHex($("#text-color").spectrum("get").toHexString()) )
     }
@@ -230,6 +231,9 @@
   
   $("[name=weastatus]").val( getQueryParam( "weastatus" , 30 ) );
   console.log( "Get weastatus " + getQueryParam("weastatus" , 30));
+  
+    $("[name=weaformat]").val( getQueryParam( "weaformat" , 0 ) );
+  console.log( "Get weaformat " + getQueryParam("weaformat" , 0));
   
   </script>
   </body>
