@@ -84,8 +84,8 @@
           </select>
          </div>
          <div class="ui-block-b" style="width:30%">
-           <label for="weaformat"><strong>Format:</strong></label>
-           <select name="weaformat" id="weaformat" data-role="slider">
+           <label for="weaunit"><strong>Unit:</strong></label>
+           <select name="weaunit" id="weaunit" data-role="slider">
             <option value=0 selected >°C</option>
             <option value=1>°F</option>
            </select>
@@ -209,7 +209,7 @@
       'language': parseInt( $("#language :selected").val() ),
       'format': parseInt( $("#format :selected").val() ),
       'weastatus': parseInt( $("#weastatus :selected").val() ),
-      'weaformat': parseInt( $("#weaformat).val() ),
+      'weaunit': parseInt( $("#weaunit).val() ),
       'backgroundcolor': parseInt( GColor.fromStrHex($("#bkg-color").spectrum("get").toHexString()) ),
       'textcolor': parseInt( GColor.fromStrHex($("#text-color").spectrum("get").toHexString()) )
     }
@@ -232,8 +232,8 @@
   $("[name=weastatus]").val( getQueryParam( "weastatus" , 30 ) );
   console.log( "Get weastatus " + getQueryParam("weastatus" , 30));
   
-    $("[name=weaformat]").val( getQueryParam( "weaformat" , 0 ) );
-  console.log( "Get weaformat " + getQueryParam("weaformat" , 0));
+    $("[name=weaunit]").val( getQueryParam( "weaunit" , 0 ) );
+  console.log( "Get weaunit " + getQueryParam("weaunit" , 0));
   
   </script>
   </body>
