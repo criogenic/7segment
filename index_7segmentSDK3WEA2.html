@@ -91,7 +91,15 @@
            </select>
          </div>
         </div><!-- /grid-a -->
+         <div class="ui-block-a">
+           <label for="weanotif"><strong>Notification:</strong></label>
+           <select name="weanotif" id="weanotif" data-role="slider">
+            <option value=0 selected >Off</option>
+            <option value=1>ON</option>
+           </select>
+         </div>
         <div id="spacer"></div>
+        
         <!-- Colorpicker-->
         <div name="color_section">
           <label><strong>Time Colors:</strong></label>
@@ -210,6 +218,7 @@
       'format': parseInt( $("#format :selected").val() ),
       'weastatus': parseInt( $("#weastatus :selected").val() ),
       'weaunit': parseInt( $("#weaunit").val() ),
+      'weanotif': parseInt( $("#weanotif").val() ),
       'backgroundcolor': parseInt( GColor.fromStrHex($("#bkg-color").spectrum("get").toHexString()) ),
       'textcolor': parseInt( GColor.fromStrHex($("#text-color").spectrum("get").toHexString()) )
     }
@@ -234,6 +243,9 @@
   
     $("[name=weaunit]").val( getQueryParam( "weaunit" , 0 ) );
   console.log( "Get weaunit " + getQueryParam("weaunit" , 0));
+  
+    $("[name=weanotif]").val( getQueryParam( "weanotif" , 0 ) );
+  console.log( "Get weanotif " + getQueryParam("weanotif" , 0));
   
   </script>
   </body>
