@@ -226,8 +226,8 @@
   }
   
   // Set initial values
-  $("[name=display-status]").val( getQueryParam("status" , 1) );
-  console.log( "Get status " + getQueryParam("status" , 1));
+  $("[name=display-status]").val( getQueryParam("status" , "1") );
+  console.log( "Get status " + getQueryParam("status" , "1"));
   
   $("[name=display-bg]").val( getQueryParam("background" , "0" ) );
   console.log( "Get background " + getQueryParam("background" , "0"));
@@ -241,11 +241,11 @@
   $("[name=weastatus]").val( getQueryParam( "weastatus" , 30 ) );
   console.log( "Get weastatus " + getQueryParam("weastatus" , 30));
   
-    $("[name=weaunit]").val( getQueryParam( "weaunit" , 0 ) );
-  console.log( "Get weaunit " + getQueryParam("weaunit" , 0));
+    $("[name=weaunit]").val( getQueryParam( "weaunit" , "0" ) );
+  console.log( "Get weaunit " + getQueryParam("weaunit" , "0"));
   
-    $("[name=weanotif]").val( getQueryParam( "weanotif" , 0 ) );
-  console.log( "Get weanotif " + getQueryParam("weanotif" , 0));
+    $("[name=weanotif]").val( getQueryParam( "weanotif" , "0" ) );
+  console.log( "Get weanotif " + getQueryParam("weanotif" , "0"));
   
   </script>
   </body>
