@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tempi bus in arrivo - ATAC</title>
+  <style>
+    :root {
+      --bg: #030711;
+      --bg-accent: #0b152d;
+      --card: rgba(15, 23, 42, 0.85);
+      --card-border: #1f2937;
+      --muted: #94a3b8;
+      --text: #f8fafc;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err:#ef0020;
+      --warn2: #ef4444;
+      --accent: #7dd3fc;
+      --accent-strong: #38bdf8;
+      font-family: "Inter", "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(180deg, #0a0f1f 0%, #030711 60%, #000000 100%);
+      color: var(--text);
+      font-family: var(--font-family, "Inter", "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+      min-height: 100vh;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+    }
+
+    .wrap {
+      width: min(960px, 100%);
+      padding: 30px 20px 40px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      margin: 0 0 16px;
+      font-weight: 600;
+      letter-spacing: .02em;
+      color: #e2e8f0;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(30px);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+      font-size: .95rem;
+    }
+
+    .row label {
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      transition: border .2s ease, box-shadow .2s ease;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, .04);
+    }
+
+    input[type="number"] {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: .9rem;
+      width: 60px;
+      transition: border .2s ease, box-shadow .2s ease;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, .04);
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border: 1px solid var(--accent-strong);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+    }
+
+    .threshold-inputs {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .threshold-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .85rem;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border: 1px solid var(--accent-strong);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--accent-strong), #1d4ed8);
+      color: #0f172a;
+      border: 0;
+      border-radius: 14px;
+      padding: 10px 18px;
+      font-weight: 700;
+      font-size: .95rem;
+      cursor: pointer;
+      box-shadow: 0 15px 25px rgba(7, 14, 25, 0.5);
+      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 30px rgba(7, 14, 25, 0.55);
+    }
+
+    button:active {
+      transform: scale(.98);
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 80px 1fr 120px;
+      gap: 12px;
+      font-size: 1.2rem;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 20px;
+      padding: 14px;
+      width: 100%;
+    }
+
+    .grid-row {
+      display: contents;
+      cursor: pointer;
+    }
+
+    .grid-row .td {
+      transition: background .2s ease;
+    }
+
+    .grid-row:hover .td {
+      background: rgba(56, 189, 248, 0.1);
+      border-radius: 8px;
+    }
+
+    button.auto {
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.8) inset, 0 15px 25px rgba(7, 14, 25, 0.4);
+    }
+
+    button[data-interval="0"] {
+      background: #1f2937;
+      color: #cbd5e1;
+      border: 1px solid #334155;
+      box-shadow: none;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      color: #e2e8f0;
+    }
+
+    .modal-close {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.15);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      color: var(--muted);
+      font-size: .85rem;
+      font-weight: 600;
+    }
+
+    .detail-value {
+      color: var(--text);
+      font-size: .9rem;
+    }
+
+    .controls-toggle {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      transition: background .2s ease;
+    }
+
+    .controls-toggle:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .controls-toggle-icon {
+      transition: transform .3s ease;
+    }
+
+    .controls-toggle.open .controls-toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    .refresh-btn-small {
+      background: linear-gradient(135deg, var(--accent-strong), #1d4ed8);
+      color: #0f172a;
+      border: 0;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(7, 14, 25, 0.4);
+      transition: transform .2s ease, box-shadow .2s ease;
+      margin-left: 8px;
+    }
+
+    .refresh-btn-small:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(7, 14, 25, 0.5);
+    }
+
+    .refresh-btn-small:active {
+      transform: scale(0.95);
+    }
+
+    .refresh-btn-small:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: scale(1);
+    }
+
+    .controls-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .controls-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .3s ease;
+    }
+
+    .controls-panel.open {
+      max-height: 400px;
+    }
+
+    .controls-content {
+      padding: 0 0 12px 0;
+    }
+
+    .th {
+      font-weight: 600;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.25);
+      padding: 10px 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: .9rem;
+    }
+
+    .td {
+      padding: 10px 6px;
+      min-height: 48px;
+      font-size: 1.2rem;
+    }
+
+    .td.arrival-cell {
+      font-size: 1.4rem;
+      text-align: right;
+    }
+
+    .td.arrival-cell .badge {
+      font-size: 1.1rem;
+      padding: 6px 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: .95rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .ok {
+      background: #22c55e;
+      color: #0f172a;
+      border: 1px solid #15803d;
+    }
+
+    .warn {
+      background: #fbbf24;
+      color: #331a00;
+      border: 1px solid #b45309;
+    }
+    .warn2 {
+      background: #ef4444;
+      color: #330000;
+      border: 1px solid #7f1d1d;
+    }
+
+    .err {
+      background: #ef0020;
+      color: #330000;
+      border: 1px solid #7f1d1d;
+    }
+
+    .footer {
+      margin-top: 18px;
+      font-size: .85rem;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .footer a {
+      color: #7dd3fc;
+    }
+
+    .small {
+      font-size: .85rem;
+    }
+
+    .last-update {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .last-update-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: nowrap;
+    }
+
+    .last-update-row > span {
+      flex: 0 1 auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty {
+      padding: 10px 0;
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+
+    .overflow {
+      overflow: auto;
+    }
+
+    .stop-separator {
+      grid-column: 1/-1;
+      background: rgba(56, 189, 248, 0.15);
+      padding: 8px 12px;
+      border-radius: 10px;
+      margin: 8px 0;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    @media (max-width: 640px) {
+
+      html,
+      body {
+        background: linear-gradient(180deg, #030711, #02030b, #010104);
+      }
+
+      .wrap {
+        padding: 12px 10px 24px;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+        margin: 0 0 12px;
+      }
+
+      .card {
+        padding: 14px;
+        border-radius: 20px;
+      }
+
+      .row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .last-update-row {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+      }
+
+      .row span,
+      .row label {
+        width: 100%;
+        font-size: .85rem;
+      }
+
+      .last-update-row > span {
+        width: auto !important;
+      }
+
+      .overflow {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -14px;
+        padding: 0 14px;
+      }
+
+      .grid {
+        grid-template-columns: 60px 1fr 100px;
+        gap: 8px;
+        font-size: 1.05rem;
+        padding: 10px;
+        width: 100%;
+        min-width: 100%;
+      }
+
+      .th {
+        font-size: .75rem;
+        padding: 6px 3px;
+      }
+
+      .td {
+        font-size: 1.05rem;
+        padding: 6px 3px;
+        min-height: 40px;
+      }
+
+      .td.arrival-cell {
+        font-size: 1.2rem;
+      }
+
+      .td.arrival-cell .badge {
+        font-size: .95rem;
+        padding: 5px 12px;
+      }
+
+      .badge {
+        font-size: .8rem;
+        padding: 4px 10px;
+      }
+
+      button {
+        border-radius: 10px;
+        font-size: .8rem;
+        padding: 8px 12px;
+      }
+
+      input[type="text"] {
+        font-size: .9rem;
+        padding: 10px 12px;
+        border-radius: 10px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <center>
+      <h1>Tempi degli autobus in arrivo</h1>
+    </center>
+
+    <div class="card">
+
+
+
+      <div class="row small last-update-row">
+        <span>Ultimo aggiornamento: <span id="lastUpdate" class="last-update">–</span></span>
+        <button id="refreshBtn" class="refresh-btn-small" title="Aggiorna">↻</button>
+      </div>
+
+      <div id="stopMeta" class="small muted"></div>
+
+      <div class="overflow" style="margin-top:10px">
+        <div id="table" class="grid" role="table" aria-label="Arrivi"></div>
+        
+      </div>
+      <div class="controls-toggle" id="controlsToggle">
+        <div class="controls-header">
+          <span style="font-weight:600;font-size:.95rem;">Impostazioni</span>
+          <div style="display:flex;align-items:center;gap:8px;">
+
+            <span class="controls-toggle-icon">▼</span>
+          </div>
+          
+        </div>
+      </div>
+      <div class="controls-panel" id="controlsPanel">
+        <div class="controls-content">
+          <div class="row">
+            <label for="stopCode">Codice palina</label>
+            <input id="stopCode" type="text" value="70376,70978" inputmode="text" placeholder="es: 70376, 70377" />
+            <span id="status" class="muted small">Pronto</span>
+          </div>
+
+          <div class="row small">
+            <span>Frequenza auto-aggiornamento:</span>
+            <button data-interval="15000">15s</button>
+            <button data-interval="30000">30s</button>
+            <button data-interval="60000">60s</button>
+            <button data-interval="0" class="auto">Disattiva auto</button>
+            <span class="muted">(<span id="autoInfo">disattivato</span>)</span>
+          </div>
+
+          <div class="row small">
+            <span>Soglie badge (minuti):</span>
+            <div class="threshold-inputs">
+              <div class="threshold-item">
+                <span style="color:#ef4444;">● Rosso ≤</span>
+                <input type="number" id="thresholdRed" value="1" min="0" max="99" />
+              </div>
+              <div class="threshold-item">
+                <span style="color:#fbbf24;">● Giallo ≤</span>
+                <input type="number" id="thresholdYellow" value="3" min="0" max="99" />
+              </div>
+              <div class="threshold-item">
+                <span style="color:#f59e0b;">● Arancio ≤</span>
+                <input type="number" id="thresholdOrange" value="10" min="0" max="99" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="footer muted small">
+        Fonte: <a href="https://viaggiacon.atac.roma.it/" target="_blank" rel="noopener noreferrer">ATAC</a>.
+        Nota: i minuti sono calcolati da <code>time</code> (secondi) quando presente, altrimenti si usa la descrizione
+        <code>distanzaAVM</code>.
+      </div>
+    </div>
+  </div>
+
+  <div id="detailModal" class="modal" onclick="if(event.target === this) closeModal();">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Dettagli autobus</h2>
+        <div class="modal-close" onclick="closeModal()">×</div>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Linea</span>
+        <span class="detail-value" id="detailLine"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Direzione</span>
+        <span class="detail-value" id="detailDest"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Arrivo</span>
+        <span class="detail-value" id="detailArrival"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Distanza AVM</span>
+        <span class="detail-value" id="detailDistance"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">Note</span>
+        <span class="detail-value" id="detailNotes"></span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = "https://viaggiacon.atac.roma.it/proxy/proxy.ashx?url=";
+
+    // Corretto: preserva gli slash dell'inner URL
+    const buildUrl = (stopCode) => {
+      const code = encodeURIComponent(String(stopCode).trim()); // solo il codice palina va codificato
+      const inner = `url.tpPortalStopInfo/stopCode=${code}`;
+      // encodeURI preserva gli slash (/) e i due punti, evitando %2F
+      return API_BASE + encodeURI(inner);
+    };
+
+    // UI refs
+    const stopInput = document.getElementById('stopCode');
+    const btn = document.getElementById('refreshBtn');
+    const status = document.getElementById('status');
+    const table = document.getElementById('table');
+    const lastUpdate = document.getElementById('lastUpdate');
+    const stopMeta = document.getElementById('stopMeta');
+    const autoButtons = document.querySelectorAll('button[data-interval]');
+    const autoInfo = document.getElementById('autoInfo');
+
+    let autoTimer = null;
+    let autoMs = 0; // default disabled
+    let thresholds = { red: 1, yellow: 3, orange: 10 };
+
+    function setStatus(text, kind = "info") {
+      status.textContent = text;
+      status.className = "small";
+      if (kind === "ok") status.classList.add("ok", "badge");
+      if (kind === "warn") status.classList.add("warn", "badge");
+      if (kind === "warn2") status.classList.add("warn2", "badge");
+      if (kind === "err") status.classList.add("err", "badge");
+    }
+
+    function fmtMinutesFromSeconds(s) {
+      if (typeof s !== "number" || isNaN(s)) return null;
+      const m = Math.max(0, Math.round(s / 60));
+      return m;
+    }
+
+    function renderHeader() {
+      const header = [
+        { label: "Linea" },
+        { label: "Destinazione" },
+        { label: "Arrivo" }
+      ];
+      return header.map(h => {
+        const div = document.createElement('div');
+        div.className = 'th';
+        div.textContent = h.label;
+        return div;
+      });
+    }
+
+    function badgeFromMinutes(m) {
+      const span = document.createElement('span');
+      span.className = 'badge';
+      if (m <= thresholds.red) {
+        span.classList.add('err');
+        span.textContent = m === 0 ? "In arrivo" : `${m} min`;
+      } else if (m <= thresholds.yellow) {
+        span.classList.add('warn2');
+        span.textContent = `${m} min`;
+      } else if (m <= thresholds.orange) {
+        span.classList.add('warn');
+        span.textContent = `${m} min`;
+      } else {
+        span.classList.add('ok');
+        span.textContent = `${m} min`;
+      }
+      return span;
+    }
+
+    function renderRows(realtimeinfo) {
+      const rows = [];
+      const sorted = [...realtimeinfo].sort((a, b) => {
+        const ta = (typeof a.time === "number" ? a.time : Number.POSITIVE_INFINITY);
+        const tb = (typeof b.time === "number" ? b.time : Number.POSITIVE_INFINITY);
+        return ta - tb;
+      });
+
+      for (const r of sorted) {
+        const min = fmtMinutesFromSeconds(r.time);
+
+        const lineCell = document.createElement('div');
+        lineCell.className = 'td';
+        lineCell.innerHTML = `<strong>${r.line}</strong>`;
+        lineCell.onclick = () => showDetails(r);
+
+        const destCell = document.createElement('div');
+        destCell.className = 'td';
+        destCell.textContent = r.linedest || '—';
+        destCell.onclick = () => showDetails(r);
+
+        const arrivoCell = document.createElement('div');
+        arrivoCell.className = 'td arrival-cell';
+        arrivoCell.onclick = () => showDetails(r);
+        if (min !== null) {
+          arrivoCell.appendChild(badgeFromMinutes(min));
+        } else {
+          const span = document.createElement('span');
+          span.className = 'badge warn';
+          span.textContent = r.distanzaAVM || '—';
+          arrivoCell.appendChild(span);
+        }
+
+        rows.push(lineCell, destCell, arrivoCell);
+      }
+      return rows;
+    }
+
+    function showDetails(busData) {
+      const modal = document.getElementById('detailModal');
+      const min = fmtMinutesFromSeconds(busData.time);
+
+      let arrivalText = '—';
+      if (min !== null) {
+        if (min === 0) arrivalText = 'In arrivo';
+        else arrivalText = `${min} minuti`;
+      } else {
+        arrivalText = busData.distanzaAVM || '—';
+      }
+
+      const notes = [];
+      if (busData.linepercorsotype && busData.linepercorsotype !== 'NORMALE') notes.push(busData.linepercorsotype);
+      if (busData.occupazione === 1) notes.push('Affollamento: Basso');
+      if (busData.occupazione === 2) notes.push('Affollamento: Medio');
+      if (busData.occupazione === 3) notes.push('Affollamento: Alto');
+      if (busData.disabili === 'S') notes.push('Accessibile');
+      if (busData.ariacond === 'S') notes.push('Aria condizionata');
+
+      document.getElementById('detailLine').textContent = busData.line;
+      document.getElementById('detailDest').textContent = busData.linedest || '—';
+      document.getElementById('detailArrival').textContent = arrivalText;
+      document.getElementById('detailDistance').textContent = busData.distanzaAVM || '—';
+      document.getElementById('detailNotes').textContent = notes.join(', ') || 'Nessuna nota';
+
+      modal.classList.add('show');
+    }
+
+    function closeModal() {
+      document.getElementById('detailModal').classList.remove('show');
+    }
+
+    function renderEmpty(message = "Nessun arrivo previsto al momento") {
+      table.innerHTML = "";
+      const headerEls = renderHeader();
+      headerEls.forEach(el => table.appendChild(el));
+      const empty = document.createElement('div');
+      empty.className = 'td empty';
+      empty.textContent = message;
+      empty.style.gridColumn = '1 / -1';
+      table.appendChild(empty);
+    }
+
+    function renderData(dataArray) {
+      table.innerHTML = "";
+
+      const headerEls = renderHeader();
+      headerEls.forEach(el => table.appendChild(el));
+
+      let totalArrivals = 0;
+      for (const data of dataArray) {
+        const stop = (data.stopsinfo && data.stopsinfo[0]) ? data.stopsinfo[0] : null;
+        if (!stop) continue;
+
+        const realtime = Array.isArray(stop.realtimeinfo) ? stop.realtimeinfo : [];
+        if (realtime.length > 0) {
+          // Add separator if multiple stops
+          if (dataArray.length > 1) {
+            const separator = document.createElement('div');
+            separator.className = 'stop-separator';
+            separator.textContent = `${stop.name || 'Palina'} [${stop.code || ''}]`;
+            table.appendChild(separator);
+          }
+
+          const rows = renderRows(realtime);
+          rows.forEach(el => table.appendChild(el));
+          totalArrivals += realtime.length;
+        }
+      }
+
+      if (totalArrivals === 0) {
+        renderEmpty();
+      }
+
+      // Update meta with all stops
+      const stopNames = dataArray.map(d => {
+        const s = d.stopsinfo && d.stopsinfo[0];
+        return s ? `${s.name || ''} [${s.code || ''}]` : '';
+      }).filter(Boolean).join(' • ');
+      stopMeta.textContent = stopNames;
+    }
+
+    async function fetchArrivals() {
+      const codes = stopInput.value.trim();
+      if (!codes) {
+        setStatus("Inserisci un codice palina", "warn");
+        return;
+      }
+
+      const codeArray = codes.split(',').map(c => c.trim()).filter(Boolean);
+      if (codeArray.length === 0) {
+        setStatus("Inserisci un codice palina valido", "warn");
+        return;
+      }
+
+      setStatus("Caricamento…");
+      btn.disabled = true;
+
+      try {
+        const promises = codeArray.map(async code => {
+          const url = buildUrl(code);
+          const res = await fetch(url, { method: "GET", cache: "no-store" });
+          if (!res.ok) throw new Error(`HTTP ${res.status} per codice ${code}`);
+          const data = await res.json();
+          if (data.status !== "OK") throw new Error(data.error_message || "Risposta non valida");
+          return data;
+        });
+
+        const results = await Promise.all(promises);
+        renderData(results);
+        const now = new Date();
+        lastUpdate.textContent = now.toLocaleString();
+        setStatus("Aggiornato", "ok");
+      } catch (err) {
+        console.error(err);
+        setStatus("Impossibile recuperare i dati", "err");
+        renderEmpty("Impossibile recuperare i dati");
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    function setAutoRefresh(ms) {
+      autoMs = ms;
+      autoInfo.textContent = ms > 0 ? `${Math.round(ms / 1000)}s` : 'disattivato';
+      autoButtons.forEach(b => {
+        const btnMs = Number(b.dataset.interval);
+        b.classList.toggle('auto', btnMs === ms);
+      });
+      if (autoTimer) clearInterval(autoTimer);
+      autoTimer = null;
+      if (ms > 0) {
+        autoTimer = setInterval(fetchArrivals, autoMs);
+      }
+      localStorage.setItem('autoRefreshMs', ms);
+    }
+
+    // Event handlers
+    document.getElementById('thresholdRed').addEventListener('change', (e) => {
+      thresholds.red = parseInt(e.target.value) || 1;
+      localStorage.setItem('thresholdRed', thresholds.red);
+    });
+    document.getElementById('thresholdYellow').addEventListener('change', (e) => {
+      thresholds.yellow = parseInt(e.target.value) || 3;
+      localStorage.setItem('thresholdYellow', thresholds.yellow);
+    });
+    document.getElementById('thresholdOrange').addEventListener('change', (e) => {
+      thresholds.orange = parseInt(e.target.value) || 10;
+      localStorage.setItem('thresholdOrange', thresholds.orange);
+    });
+
+    document.getElementById('controlsToggle').addEventListener('click', (e) => {
+      // Don't toggle if clicking the refresh button
+      if (e.target.id === 'refreshBtn' || e.target.closest('#refreshBtn')) return;
+      const toggle = document.getElementById('controlsToggle');
+      const panel = document.getElementById('controlsPanel');
+      toggle.classList.toggle('open');
+      panel.classList.toggle('open');
+    });
+
+    btn.addEventListener('click', fetchArrivals);
+    stopInput.addEventListener('keydown', (e) => { 
+      if (e.key === 'Enter') { 
+        fetchArrivals(); 
+      } 
+    });
+    stopInput.addEventListener('blur', () => {
+      localStorage.setItem('stopCodes', stopInput.value.trim());
+    });
+    autoButtons.forEach(b => {
+      b.addEventListener('click', () => {
+        const ms = Number(b.dataset.interval);
+        setAutoRefresh(ms);
+        fetchArrivals();
+      })
+    });
+
+    // Avvio
+    // Load saved thresholds
+    thresholds.red = parseInt(localStorage.getItem('thresholdRed')) || 1;
+    thresholds.yellow = parseInt(localStorage.getItem('thresholdYellow')) || 3;
+    thresholds.orange = parseInt(localStorage.getItem('thresholdOrange')) || 10;
+    document.getElementById('thresholdRed').value = thresholds.red;
+    document.getElementById('thresholdYellow').value = thresholds.yellow;
+    document.getElementById('thresholdOrange').value = thresholds.orange;
+
+    // Load saved stop codes
+    const savedCodes = localStorage.getItem('stopCodes');
+    if (savedCodes) {
+      stopInput.value = savedCodes;
+    }
+
+    // Load saved auto-refresh setting
+    const savedAutoMs = parseInt(localStorage.getItem('autoRefreshMs'));
+    if (!isNaN(savedAutoMs)) {
+      autoMs = savedAutoMs;
+    }
+
+    setAutoRefresh(autoMs);
+    fetchArrivals();
+  </script>
+</body>
+
+</html>
