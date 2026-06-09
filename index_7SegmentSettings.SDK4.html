@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
-  Pagina di configurazione 7 Segment - Versione pagina: 2.0.0
+  Pagina di configurazione 7 Segment - Versione pagina: 2.1.0
   Redesign moderno, autonomo (nessuna dipendenza esterna), responsive,
   con tema chiaro/scuro automatico.
 
@@ -119,10 +119,12 @@
     }
 
     .swatch-grid {
-      display: grid;
+      display: none;
       grid-template-columns: repeat(8, 1fr);
       gap: 8px;
+      margin-top: 12px;
     }
+    .swatch-grid.open { display: grid; }
     .swatch {
       aspect-ratio: 1 / 1;
       border-radius: 8px;
@@ -139,7 +141,19 @@
       border-radius: 8px;
       border: 1px solid var(--border);
     }
-    .color-head { display: flex; align-items: center; justify-content: space-between; }
+    .color-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+    }
+    .color-head .right { display: flex; align-items: center; gap: 10px; }
+    .caret {
+      color: var(--muted);
+      font-size: 12px;
+      transition: transform .15s;
+    }
+    .caret.open { transform: rotate(180deg); }
 
     .footer-bar {
       position: fixed;
@@ -258,16 +272,22 @@
     <!-- Colori (solo piattaforme a colori) -->
     <div class="card" id="color_section">
       <div class="row">
-        <div class="color-head">
+        <div class="color-head" id="bkg-head">
           <span class="label">Colore sfondo</span>
-          <span class="color-preview" id="bkg-preview"></span>
+          <span class="right">
+            <span class="color-preview" id="bkg-preview"></span>
+            <span class="caret" id="bkg-caret">&#9662;</span>
+          </span>
         </div>
         <div class="swatch-grid" id="bkg-grid"></div>
       </div>
       <div class="row">
-        <div class="color-head">
+        <div class="color-head" id="text-head">
           <span class="label">Colore testo</span>
-          <span class="color-preview" id="text-preview"></span>
+          <span class="right">
+            <span class="color-preview" id="text-preview"></span>
+            <span class="caret" id="text-caret">&#9662;</span>
+          </span>
         </div>
         <div class="swatch-grid" id="text-grid"></div>
       </div>
@@ -348,6 +368,10 @@
               });
               sw.classList.add('selected');
               refresh();
+              // Scelto il colore, richiude la tavolozza.
+              grid.classList.remove('open');
+              var caret = document.getElementById(key + '-caret');
+              if (caret) { caret.classList.remove('open'); }
             });
             grid.appendChild(sw);
           });
@@ -392,6 +416,24 @@
       } else {
         buildPalette('bkg-grid', 'bkg-preview', 'bkg');
         buildPalette('text-grid', 'text-preview', 'text');
+
+        // Click sull'intestazione: apre/chiude la relativa tavolozza.
+        function toggleGrid(key) {
+          var grid = document.getElementById(key + '-grid');
+          var caret = document.getElementById(key + '-caret');
+          var willOpen = !grid.classList.contains('open');
+          // Chiude entrambe, poi apre eventualmente quella richiesta.
+          ['bkg', 'text'].forEach(function (k) {
+            document.getElementById(k + '-grid').classList.remove('open');
+            document.getElementById(k + '-caret').classList.remove('open');
+          });
+          if (willOpen) {
+            grid.classList.add('open');
+            caret.classList.add('open');
+          }
+        }
+        document.getElementById('bkg-head').addEventListener('click', function () { toggleGrid('bkg'); });
+        document.getElementById('text-head').addEventListener('click', function () { toggleGrid('text'); });
       }
 
       document.getElementById('credit').textContent =
