@@ -4,6 +4,8 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- CSP: lo sha256 corrisponde allo script inline; se modifichi lo script va ricalcolato -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha256-ehXY/Spv8dB2yG9Qd7Aqu+FH2dmI3qfBZtDLKWV2g8w='; style-src 'unsafe-inline'; connect-src https://feed-atac.criogenic.workers.dev https://romamobilita.it https://viaggiacon.atac.roma.it; base-uri 'none'; form-action 'none'" />
   <title>Tempi bus in arrivo - GTFS-RT Roma</title>
   <style>
     :root {
@@ -630,16 +632,12 @@
             </div>
           </div>
 
-          <div class="row small">
-            <label for="customProxy">Proxy CORS personalizzato</label>
-            <input id="customProxy" type="text" value="" placeholder="es: https://mio-proxy.example/?url={url}  (vuoto = automatico)" />
-          </div>
           <div class="row small muted">Proxy in uso: <span id="proxyInfo">–</span></div>
         </div>
       </div>
       <div class="footer muted small">
         Fonte: <a href="https://romamobilita.it/it/tecnologie/open-data" target="_blank" rel="noopener noreferrer">Roma Mobilità – GTFS-Realtime</a>.
-        Il feed non consente l'accesso diretto dal browser (CORS), quindi viene letto tramite un proxy CORS pubblico.
+        Il feed non consente l'accesso diretto dal browser (CORS), quindi viene letto tramite un Cloudflare Worker dedicato.
         La direzione mostrata è il capolinea prevalente della linea in quel senso di marcia.
       </div>
     </div>
@@ -661,63 +659,123 @@
     </div>
   </div>
 
-  <!-- protobuf.js (versione bloccata) per decodificare il feed GTFS-Realtime -->
-  <script src="https://cdn.jsdelivr.net/npm/protobufjs@7.4.0/dist/protobuf.min.js" crossorigin="anonymous"></script>
   <script>
     // ---- Sorgenti dati ------------------------------------------------------
     const FEED_URL = "https://romamobilita.it/wp-content/uploads/shared/rome_rtgtfs_trip_updates_feed.pb";
     const ATAC_STOP_INFO = "https://viaggiacon.atac.roma.it/proxy/proxy.ashx?url=url.tpPortalStopInfo/stopCode=";
 
-    // Proxy CORS provati in ordine; {url} = URL del feed codificato, {raw} = non codificato.
-    // Il primo diretto serve nel caso Roma Mobilità abiliti CORS in futuro.
+    // Sorgenti provate in ordine; {raw} = URL del feed.
+    // 1) Worker Cloudflare personale (vedi cloudflare-worker.js): restituisce sempre il feed.
+    // 2) Accesso diretto: funziona solo se un giorno Roma Mobilità abiliterà CORS.
+    // Se aggiungi una sorgente, aggiungi il dominio anche a connect-src nella Content-Security-Policy.
     const PROXIES = [
-      // Worker Cloudflare personale (vedi cloudflare-worker.js): restituisce sempre il feed
       { name: "worker Cloudflare", tpl: "https://feed-atac.criogenic.workers.dev/" },
-      { name: "diretto", tpl: "{raw}" },
-      { name: "corsproxy.io", tpl: "https://corsproxy.io/?url={url}" },
-      { name: "allorigins", tpl: "https://api.allorigins.win/raw?url={url}" },
-      { name: "codetabs", tpl: "https://api.codetabs.com/v1/proxy?quest={raw}" },
-      { name: "cors.eu.org", tpl: "https://cors.eu.org/{raw}" }
+      { name: "diretto", tpl: "{raw}" }
     ];
 
     // Capolinea prevalente per linea e direction_id, estratto dal GTFS statico (trips.txt).
     const HEADSIGNS = {"T01":["ANAGNINA (MA)",""],"C11":["CIMITERO LAURENTINO","CINECITTA' (MA)"],"T10":["TOR VERGATA/SCHIAVONETTI",""],"C13":["CIMITERO LAURENTINO","P.LE STAZIONE DEL LIDO (RL)"],"C20":["LENORMANT/ZELIA NUTTAL",""],"P02":["REPUBBLICA (MA)",""],"C2":["CIMITERO FLAMINIO","TERMINI (MA-MB-FS)"],"P20":["PORTONACCIO/TIBURTINA",""],"C3":["STAZ.NE TIBURTINA (MB)","CIMITERO FLAMINIO"],"C4":["CIMITERO FLAMINIO","P.LE STAZIONE DEL LIDO (RL)"],"C5":["STAZIONE MONTEBELLO (RV)","P. ZA DELLE CAMELIE"],"C7":["CIMITERO FLAMINIO","LAURENTINA (MB)"],"C9":["S. VITTORINO","ROMANISTI/MARFORIO"],"L01":["LAURENTINA (MB)",""],"H":["TERMINI (MA-MB-FS)","DEI CAPASSO"],"L80":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L10":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L08":["TERMINI (MA-MB-FS)",""],"A01":["TERMINI (MA-MB-FS)",""],"A10":["PRENESTINA/LARICI",""],"nMB":["REBIBBIA (MB)","LAURENTINA (MB)"],"nMC":["P.ZA VENEZIA","PANTANO (MC)"],"A05":["GROTTE CELONI (MC)",""],"n11":["GROTTE CELONI (MC)","P.ZA VENEZIA"],"A50":["PRENESTINA/CANDIANI",""],"C02":["BALENIERE/INPS",""],"01":["P.LE STAZIONE DEL LIDO (RL)","P.LE STAZIONE DEL LIDO (RL)"],"012":["OSTIENSE/STAZ.NE ACILIA (RL)",""],"06":["WOLF FERRARI/BAZZINI","P.LE STAZIONE DEL LIDO (RL)"],"065":["ALTAMURA/BERTOLLA","WOLF FERRARI/BAZZINI"],"014":["P.LE STAZIONE DEL LIDO (RL)","ANTIFANE/ISOLA 46"],"016F":["TORCEGNO/CASTEL PORZIANO","MONTI S. PAOLO/CONFORTI"],"016":["ANTIFANE/ISOLA 46","MONTI S. PAOLO/CONFORTI"],"020":["STAZ.NE PRIMA PORTA",""],"021":["GROTTAROSSA/ISTITUTO ASISIUM","STAZ.NE LA GIUSTINIANA (FL3)"],"029":["L.GO SPERLONGA","STAZIONE SAXA RUBRA"],"03":["ALTAMURA/BERTOLLA",""],"04B":["OSTIENSE/STAZ.NE ACILIA (RL)",""],"04":["VILLANI R./CUPOLE","P.LE STAZIONE DEL LIDO (RL)"],"043":["ORTUCCHIO","REBIBBIA (MB)"],"P03":["PONTE MAMMOLO (MB)",""],"P30":["PORTONACCIO/TIBURTINA",""],"045":["GROTTE CELONI","ORTONA DEI MARSI/MONTENERODOMO"],"046":["ANAGNINA (MA)",""],"047":["ANAGNINA (MA)",""],"C03":["MAR ROSSO/MARE GLACIALE ARTICO",""],"05B":["EBRIDI/MERCATO","MAR ROSSO/MARE GLACIALE ARTICO"],"C30":["LENORMANT/ZELIA NUTTAL",""],"05":["IDROSCALO/BASTIMENTI","MAR ROSSO/MARE GLACIALE ARTICO"],"052":["PANTANO (MC)",""],"058F":["GROTTE CELONI (MC)","LONGONI/INPS"],"058":["TOR VERGATA/MEDICINA","PONTE MAMMOLO (MB)"],"063":["OSTIENSE/STAZ.NE ACILIA (RL)",""],"070":["STAZ.NE CRISTOFORO COLOMBO (RL)","EUR FERMI (MB)"],"C10":["ROMAGNOLI/DONATI",""],"C01":["COLOMBO/PALAZZO SPORT",""],"07":["LITORANEA/VILLAGGIO TOGNAZZI","STAZ.NE CRISTOFORO COLOMBO (RL)"],"071":["BRUNETTI/CASTEL DI LEVA",""],"073":["STRAMPELLI","BRUNETTI/CASTEL DI LEVA"],"074":["PAPIRI","BRUNETTI/CASTEL DI LE"],"075":["PONTE MAMMOLO (MB)","TONINO BELLO"],"089":["PORTUENSE/EX DAZIO","CASALE LUMBROSO/FONTEBASSO"],"09":["CASTEL BOLOGNESE/STAZ. VITINIA",""],"100":["PORTA PINCIANA",""],"104":["PARCO DI CENTOCELLE (MC)",""],"105L":["PARCO DI CENTOCELLE (MC)",""],"105":["PARCO DI CENTOCELLE (MC)",""],"106":["GROTTE CELONI (MC)","PARCO DI CENTOCELLE (MC)"],"107":["GROTTE CELONI (MC)","MONDAVIO"],"A06":["STAZ.NE TIBURTINA (MB)",""],"111":["STAZ.NE TIBURTINA (MB)",""],"A60":["PRENESTINA/LARICI",""],"113":["L.GO PRENESTE",""],"115":["PAOLA",""],"117":["PZA S. GIOVANNI IN LATERANO (H)",""],"118":["APPIA/VILLA DEI QUINTILI",""],"119":["PZA VENEZIA",""],"120F":["VILLA BORGHESE/WASHINGTON","RECANATI"],"128":["CROCCO","BALDELLI (MB)"],"14NAV":["L.GO PRENESTE","TOGLIATTI/MOLFETTA"],"14":["TERMINI (MA-MB-FS)","TOGLIATTI"],"150F":["VILLA BORGHESE/WASHINGTON","TONINO BELLO"],"160":["VILLA BORGHESE/WASHINGTON","MONTAGNOLA"],"L70":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L03":["COLOMBO/RUFINO",""],"L06":["ARCO DI TRAVERTINO (MA)",""],"16":["XX SETTEMBRE","COSTAMAGNA"],"L60":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"163":["REBIBBIA (MB)","VERANO"],"168":["L.GO M.LLO DIAZ","STAZ.NE TIBURTINA (MB)"],"G05":["MANCINI",""],"201":["CONTI ANTONIO/PULLE'","MANCINI"],"170":["AGRICOLTURA","TERMINI (MA-MB-FS)"],"L50":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L05":["AGRICOLTURA",""],"180F":["DALLA CHIESA","MAZZACURATI"],"G07":["CLODIO",""],"188":["L.GO DIAZ",""],"19BUS":["GIULIO CESARE/OTTAVIANO (MA)","GERANI"],"19L":["VALLE GIULIA","GERANI"],"19NAV":["GIULIO CESARE/OTTAVIANO (MA)","VALLE GIULIA"],"190F":["MOMBASIGLIO","P.ZA VENEZIA"],"2BUS":["MANCINI","P.LE FLAMINIO (MA)"],"20L":["ANAGNINA (MA)",""],"200":["STAZ.NE PRIMA PORTA","MANCINI"],"G50":["STAZIONE GROTTAROSSA",""],"20":["ANAGNINA (MA)","CAMBELLOTTI"],"2":["MANCINI","FLAMINIO"],"211F":["CIMONE/MONTE ACERO","PIETRALATA (MB)"],"211":["CIMONE/MONTE ACERO","STAZ.NE TIBURTINA (MB)"],"223":["TERMINI (MA-MB-FS)","STAZ.NE LA GIUSTINIANA (FL3)"],"G40":["STAZIONE GROTTAROSSA",""],"228":["STAZ.NE TRASTEVERE","STAZ.NE TRASTEVERE"],"230":["SACRO CUORE DI MARIA/EUCLIDE","MOSCHEA/FORTE ANTENNE"],"23":["CLODIO","PINCHERLE/PARRAVANO"],"G70":["STAZIONE GROTTAROSSA",""],"M03":["CORNELIA (MA)",""],"246P":["CASTEL DI GUIDO/AURELIA","CORNELIA (MA)"],"M30":["CANDONI/MAGLIANA (H)",""],"246":["MALAGROTTA","CORNELIA (MA)"],"247":["STAZ.NE METRO CIPRO (MA)","STAZ.NE AURELIA"],"252":["POLICLINICO (MB)",""],"280":["PARTIGIANI (FS)","MANCINI"],"3BUS":["VALLE GIULIA","STAZ.NE TRASTEVERE (FS)"],"3L":["P.ZA DI PORTA MAGGIORE","STAZ.NE TRASTEVERE (FS)"],"3NAV":["VALLE GIULIA","P.ZA DI PORTA MAGGIORE"],"30":["CLODIO","LAURENTINA (MB)"],"301":["GROTTAROSSA/ISTITUTO ASISIUM","GIULIO CESARE/LEPANTO (MA)"],"303":["STAZ.NE LA GIUSTINIANA (FL3)","STAZ.NE PRIMA PORTA"],"309":["S. MARIA DEL SOCCORSO (MB)","STAZ.NE TIBURTINA (MB)"],"3":["VALLE GIULIA","STAZ.NE TRASTEVERE (FS)"],"310":["TERMINI (MA-MB-FS)","VESCOVIO"],"A70":["PRENESTINA/MANFREDONIA",""],"31":["LAURENTINA (MB)","CLODIO"],"311":["L.GO VALSABBIA","REBIBBIA (MB)"],"313":["TORRE MAURA (MC)","LONGONI/INPS"],"765":["ARCO DI TRAVERTINO (MA)","LAURENTINA (MB)"],"319":["BALSAMO CRIVELLI",""],"32":["STAZIONE SAXA RUBRA","GIULIO CESARE/OTTAVIANO (MA)"],"33":["LENIN","CLODIO"],"334":["BASEGGIO","RIMESSA ATAC GROTTAROSSA"],"336":["VAL D'ALA STAZIONE (FS)","QUARRATA"],"337":["VIA MANZONI/TOR LUPARA","CONCA D'ORO/PELAGOSA"],"G06":["VIMERCATI/ATENEO SALESIANO",""],"338":["MARMORALE","VAL D'AOSTA/STAZ.NE NOMENTANA"],"M05":["SIRTORI/FORTE PORTUENSE",""],"M50":["CANDONI/MAGLIANA (H)",""],"34":["PAOLA",""],"341":["SASSOFELTRIO/STAZ.NE FIDENE (FL1)","PONTE MAMMOLO (MB)"],"344":["ERETUM","STAZ.NE NUOVO SALARIO"],"G60":["STAZIONE SAXA RUBRA",""],"A07":["FUCINI/DAVANZATI",""],"350":["PONTE MAMMOLO (MB)","STAZ.NE NUOVO SALARIO"],"351":["L.GO SOMALIA","ANTAMORO G./CASTELLANI"],"360":["ZAMA","MUSE"],"L30":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"38":["TERMINI (MA-MB-FS)","PORTA DI ROMA"],"P10":["PORTONACCIO/TIBURTINA",""],"40":["TERMINI (MA-MB-FS)",""],"409":["ARCO DI TRAVERTINO (MA)","STAZ.NE TIBURTINA (MB)"],"412":["OLEVANO ROMANO","ADRIA"],"424":["PONTE MAMMOLO (MB)",""],"435":["VAL DI LANZO","PORTA DI ROMA"],"44":["TEATRO MARCELLO","MONTALCINI"],"443":["REBIBBIA (MB)",""],"L07":["ARA COELI/P.ZA VENEZIA",""],"446":["MANCINI","CORNELIA (MA)"],"448":["BALSAMO CRIVELLI",""],"450":["ALESSANDRINO","MONTI TIBURTINI/PERTINI (H)"],"451":["CINECITTA' (MA)","PONTE MAMMOLO (MB)"],"46B":["BATTISTINI/SORIA","ROSI"],"46":["P.ZA VENEZIA","STAZ.NE MONTE MARIO (FS-FL3)"],"490":["CORNELIA (MA)","STAZ.NE TIBURTINA (MB)"],"49":["P.ZA CAVOUR","OSPEDALE S. FILIPPO NERI (H)"],"492":["STAZ.NE METRO CIPRO (MA)","STAZ.NE TIBURTINA (MB)"],"495":["VALLE AURELIA/BONACCORSI","STAZ.NE TIBURTINA (MB)"],"916":["ANDERSEN","P.ZA VENEZIA"],"500":["TORRE ANGELA (MC)","ANAGNINA (MA)"],"504":["ANAGNINA (MA)",""],"506":["GROTTE CELONI (MC)","ANAGNINA (MA)"],"507":["GROTTE CELONI (MC)","ANAGNINA (MA)"],"508":["MONDAVIO","PONTE MAMMOLO (MB)"],"509":["FOSSO DEL CAVALIERE/CNR","ANAGNINA (MA)"],"5":["TERMINI (MA-MB-FS)","GERANI"],"51":["SAN GIOVANNI (MA - MC)",""],"514":["TERMINI (MA-MB-FS)","L.GO PRENESTE"],"515":["KENNEDY/STAZIONE FS CIAMPINO","ANAGNINA (MA)"],"520":["CINECITTA' (MA)",""],"52":["ARCHIMEDE",""],"53":["MANCINI",""],"542":["VERANO","P. ZA DELLE CAMELIE"],"544":["BRESSANONE/S. AGNESE ANNIBALIANO (MB1)","PARCO DI CENTOCELLE (MC)"],"545":["S. LUCA EVANGELISTA","VERANO"],"551":["VIGNE DI MORENA","ANAGNINA (MA)"],"556":["GARDENIE","ANAGNINA (MA)"],"557":["TORRE MAURA","P.ZA CARDINALI"],"558":["CINECITTA' (MA)","GARDENIE"],"559":["CINECITTA (MA)","ANAGNINA (MA)"],"590":["STAZ.NE METRO CIPRO (MA)","CINECITTA' (MA)"],"T20":["TOR VERGATA/SCHIAVONETTI",""],"G03":["RIPETTA",""],"60":["LGO PUGLIESE","P.ZA VENEZIA"],"F01":["P.ZA VENEZIA",""],"F10":["LAURENTINA/CELINE",""],"61":["VILLA BORGHESE/WASHINGTON","BALSAMO CRIVELLI"],"62":["P.ZA STAZIONE S. PIETRO (FL)","STAZ.NE TIBURTINA (MB)"],"T02":["ARCO DI TRAVERTINO (MA)",""],"628":["VOLPI/FARNESINA","BARONIO"],"63":["P.ZA MONTE SAVELLO (H)","ROSSELLINI"],"64":["P.ZA STAZIONE S. PIETRO (FL)","TERMINI (MA-MB-FS)"],"649":["STAZ.NE TIBURTINA (MB)","ZAMA"],"654":["CAMPO FARNIA/PELLARO",""],"66":["MARX","TERMINI (MA-MB-FS)"],"664":["L.GO COLLI ALBANI (MA)",""],"669":["PINCHERLE/PARRAVANO",""],"670":["PINCHERLE/PARRAVANO",""],"671":["NERVI/PALAZZO SPORT","ARCO DI TRAVERTINO (MA)"],"L20":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L02":["NERVI/PALAZZO SPORT",""],"69":["CLODIO","L.GO PUGLIESE"],"700":["CHIANESI (H)","EUR FERMI (MB)"],"70":["GIOLITTI","CLODIO"],"G04":["P.LE FLAMINIO (MA)",""],"705":["PIERMARINI","EUR FERMI (MB)"],"706":["ROTELLINI","EUR FERMI (MB)"],"708":["BERTASI BONELLI","AGRICOLTURA"],"709":["TIMOCLE","EUR FERMI (MB)"],"71":["STAZ.NE TIBURTINA (MB)",""],"712":["EUR FERMI (MB)","ORTOLANI"],"713":["BOSCO ARVALI",""],"714":["TERMINI (MA-MB-FS)","NERVI/PALAZZO SPORT"],"715":["TEATRO MARCELLO","TIBERIO IMPERATORE"],"716":["TEATRO MARCELLO","BALLARIN"],"719":["PARTIGIANI (FS)","CROCCO/MERCANTI"],"720":["LAURENTINA (MB)",""],"72":["GUGLIELMO GUASTA","LAURENTINA (MB)"],"731":["DINO VIOLA","EROI DI RODI/CONSOLE"],"74":["LAURENTINA (MB)","BRUNETTI"],"723":["LAURENTINA (MB)",""],"724":["AGRICOLTURA","GADDA"],"73":["GUGLIELMO GUASTA","AGRICOLTURA"],"75":["INDIPENDENZA","POERIO/MARINO"],"762":["AGRICOLTURA",""],"763":["CASTELLO DELLA CECCHIGNOLA","LAURENTINA (MB)"],"766":["MILLEVOI","STAZ.NE TRASTEVERE (FS)"],"767":["AGRICOLTURA",""],"769":["LONDRA","P.LE OSTIENSE-PIRAMIDE (MB-RL)"],"L40":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L04":["PARTIGIANI-STAZ.NE OSTIENSE (FS)",""],"77":["PLE OSTIENSE-PIRAMIDE (MB - RL)",""],"772":["EUR FERMI (MB)",""],"773":["BOSCO ARVALI","STAZ.NE TRASTEVERE"],"786":["REDUZZI","STAZ.NE TRASTEVERE"],"774":["STAZ.NE TRASTEVERE (FS)","MONTALCINI/RIPANDELLI"],"775":["PLE OSTIENSE-PIRAMIDE (MB-RL)","NAZZANI"],"779F":["AGRICOLTURA",""],"779":["AGRICOLTURA",""],"780":["PARTIGIANI","NERVI/PALAZZO SPORT"],"781":["P.ZA VENEZIA","MAGLIANA/SCARPERIA"],"786F":["BOSCO ARVALI","STAZ.NE TRASTEVERE"],"M04":["COLLI PORTUENSI/GIANICOLENSE",""],"788":["AGRICOLTURA","BRUNETTI/CASTEL DI LEVA"],"791":["CORNELIA (MA)","NERVI/PALAZZO SPORT"],"792":["PORTA S. GIOVANNI (MA)","EUDES"],"795":["GIUFFRE'/MONDADORI","VALGRISI"],"8BUS":["ASTALLI/VENEZIA","GIANICOLENSE/CASALETTO"],"80":["P.ZA VENEZIA","PORTA DI ROMA"],"8":["VENEZIA","CASALETTO"],"81":["CRESCENZIO/RISORGIMENTO","MALATESTA (MC)"],"82":["MONTE SACRO",""],"83":["PARTIGIANI (FS)","L.GO VALSABBIA"],"85":["TERMINI (MA-MB-FS)","ARCO DI TRAVERTINO (MA)"],"86":["CONCA D'ORO/PELAGOSA","CANETTI"],"870":["TRULLO","PAOLA"],"87":["GIULIO CESARE/LEPANTO (MA)","L.GO COLLI ALBANI (MA)"],"871":["STAZ.NE TRASTEVERE",""],"88":["VERANO","LABIA"],"881":["PAOLA","AVANZINI/QUARTIERE INCIS"],"882":["GIANICOLENSE/CASALETTO",""],"89":["CLODIO","BRESSANONE/S.AGNESE ANNIBALIANO (MB1)"],"90":["TERMINI (MA-MB-FS)","LABIA"],"F02":["TERMINI (MA-MB-FS)",""],"F20":["LAURENTINA/CELINE",""],"904":["BEDESCHI","CORNELIA (MA)"],"905":["MALAGROTTA","CORNELIA (MA)"],"906":["CASALE LUMBROSO/FONTEBASSO","VALLE AURELIA (MA-FL3)"],"910":["INDIPENDENZA","MANCINI"],"91":["BATTISTINI/SORIA",""],"911":["OSPEDALE S. FILIPPO NERI (H)","MANCINI"],"913L":["DALLA CHIESA","STAZ.NE MONTE MARIO (FS-FL3)"],"913":["P.ZA CAVOUR","STAZ.NE MONTE MARIO (FS-FL3)"],"916F":["ANDERSEN","P.ZA VENEZIA"],"92":["TERMINI (MA-MB-FS)","MARLIANA"],"93":["PRATI FISCALI/VALLE MELAINA","MONTE S. GIUSTO"],"96":["REDUZZI","PARTIGIANI (FS)"],"980":["OSPEDALE S. FILIPPO NERI (H)","PANE A."],"98":["PAOLA","MAZZACURATI"],"981":["CANDONI/RIMESSA ATAC","CORNELIA (MA)"],"983":["CORNELIA (MA)",""],"990L":["STAZ.NE METRO CIPRO (MA)",""],"990":["LGT MARZIO","STAZ.NE MONTE MARIO (FS-FL3)"],"n041":["STAZ.NE TIBURTINA (MB)","ALBA ADRIATICA/BARISCIANO"],"n070":["AGRICOLTURA","P.LE STAZIONE DEL LIDO (RL)"],"n075":["L.GO PRENESTE","TONINO BELLO"],"n200":["STAZ.NE PRIMA PORTA","MANCINI"],"n201":["P.ZA VENEZIA","CONTI ANTONIO/PULLE'"],"n3d":["P.LE OSTIENSE-PIRAMIDE (MB-RL)",""],"n3s":["PLE OSTIENSE-PIRAMIDE (MB-RL)",""],"n409":["L.GO COLLI ALBANI (MA)","STAZ.NE TIBURTINA (MB)"],"n46":["TERMINI (MA-MB-FS)","STAZ.NE MONTE MARIO (FS-FL3)"],"n500":["CINECITTA' (MA)","POLICLINICO/TOR VERGATA (H)"],"n5":["P.ZA VENEZIA","TOGLIATTI/PALME"],"n543":["P.ZA VENEZIA","VERTUNNI"],"n551":["ANAGNINA (MA)",""],"n66":["TERMINI (MA-MB-FS)","MARX"],"n70":["TERMINI (MA-MB-FS)","CLODIO"],"n705":["PIERMARINI","LAURENTINA (MB)"],"n716":["TERMINI (MA-MB-FS)","LAURENTINA (MB)"],"n719":["STAZ.NE TRASTEVERE","CANDONI/RIMESSA ATAC"],"n74":["LAURENTINA (MB)",""],"n781":["STAZ.NE TRASTEVERE","MAGLIANA/SCARPERIA"],"n8":["TERMINI (MA-MB-FS)","DEI CAPASSO"],"n90":["P.ZA VENEZIA","MONTEGIBERTO/PIAGGE"],"n904":["P.ZA VENEZIA","BEDESCHI"],"n913":["P.ZA VENEZIA","TARSIA"],"n92":["TERMINI (MA-MB-FS)","P.ZA SEMPIONE"],"n98":["TERMINI (MA-MB-FS)","MAZZACURATI"],"nMA":["ANAGNINA (MA)","BATTISTINI/SORIA"],"nMB1":["TERMINI (MA-MB-FS)",""],"nME":["P.ZA VENEZIA","P.LE STAZIONE DEL LIDO (RL)"],"MEA":["BATTISTINI (MA)","ANAGNINA (MA)"],"MEB":["REBIBBIA (MB)","LAURENTINA (MB)"],"MEB1":["JONIO (MB1)","LAURENTINA (MB)"],"MEC":["COLOSSEO","PANTANO"],"048":["PAPIRI","BETTI/CIVICO 65"],"049":["ALESSANDRINI","BISACCIA"],"051":["GROTTE CELONI (MC)","CERQUETE/PORTACANNONE"],"053":["MARELLI/NECCHI","TORRENOVA/BITONTO"],"054":["PANTANO (MC)","COLLE MATTIA"],"055":["PANTANO (MC)","D'ASCANIO"],"056":["ROCCALUMERA/BORGHESIANA","RAIMONDI M."],"057":["GROTTE CELONI (MC)",""],"059":["MITELLI","POLICLINICO/TOR VERGATA (H)"],"135":["SALARIA/PIOMBINO","STAZ.NE TIBURTINA (MB)"],"213":["CINECITTA' (MA)","L.GO PRENESTE"],"314":["ROTELLO","L.GO PRENESTE"],"340":["DANTE DA MAIANO","MARMORALE"],"343":["PONTE MAMMOLO (MB)","VALTOURNANCHE"],"404":["S. GIOVANNI IN ARGENTELLA","REBIBBIA (MB)"],"437":["REBIBBIA (MB)",""],"447":["REBIBBIA (MB)",""],"543":["VERTUNNI/SALCITO (FL2)","GARDENIE (MC)"],"548":["CINECITTA' (MA)","STA.NE TIBURTINA (MB)/p.LE EST"],"552":["GERANI/RODODENDRI","POLICLINICO/TOR VERGATA (H)"],"555":["PANTANO (MC)","PONTE DI NONA (FL2)"],"702":["TORRE S.ANASTASIA","LAURENTINA (MB)"],"721":["CASTELLO DELLA CECCHIGNOLA",""],"764":["LONDRA","AGRICOLTURA"],"789":["CINECITTA' (MA)","AMERICA (MB)"],"789F":["AMERICA (MB)",""],"036":["STAZIONE LA STORTA",""],"081":["SABBADINO/FIERA DI ROMA",""],"037":["FIESSE","STAZIONE PRIMA PORTA"],"035":["BORGO PINETO","STAZIONE PRIMA PORTA"],"985":["STAZIONE AURELIA","EUGENIO FRATE"],"908":["GASPARRI","GRONDONA"],"08":["ANTIFANE/ISOLA 46","MONTI SAN PAOLO/CONFORTI"],"992":["STAZIONE IPOGEO DEGLI OTTAVI",""],"013":["MELLANO/REGGIOLO",""],"993":["CORNELIA METRO A","STAZIONE IPOGEO DEGLI OTTAVI"],"778":["BEATA VERGINE DEL CARMELO","AMERICA METRO B"],"030":["STAZIONE LA STORTA","TRAGLIATELLA/CIVICO 225"],"226":["PIAZZA MANCINI","GROTTAROSSA/ISTITUTO ASISIUM"],"078":["CADUTI LIBERAZIONE","TARANTELLI"],"022":["GROTTAROSSA/ISTITUTO ASISIUM","STAZIONE PRIMA PORTA"],"998":["PONDERANO","STAZIONE MONTE MARIO"],"025":["FORMICHI","MOMBASIGLIO"],"032":["STAZIONE LA STORTA",""],"771":["VIOLA","AMERICA"],"038":["STAZIONE SAXA RUBRA","VALBONDIONE"],"710":["CARINI","LENIN"],"033":["SANTA CORNELIA/BRENNA","STAZIONE PRIMA PORTA"],"701":["SABBADINO/FIERA DI ROMA","LENIN"],"031":["PIEDICAVALLO","STAZIONE LA GIUSTINIANA"],"039":["STAZIONE SAXA RUBRA","SALARIA/PIOMBINO"],"018":["ROMAGNOLI/SCAVI OSTIA ANTICA",""],"017":["OSTIENSE/STAZIONE ACILIA",""],"892":["ALDOBRANDESCHI","VALLE AURELIA"],"011":["ROMAGNOLI/SCAVI OSTIA ANTICA",""],"907":["STAZIONE LA GIUSTINIANA","CORNELIA"],"546":["STAZIONE IPOGEO DEGLI OTTAVI","VAL CANNUTA/CONFORTI"],"982":["STAZIONE QUATTRO VENTI","DICIASSETTESIMA OLIMPIADE"],"146":["MOMBASIGLIO","PINETA SACCHETTI/GEMELLI"],"808":["DEI CAPASSO","EIFFEL"],"777":["BEATA VERGINE DEL CARMELO","AGRICOLTURA"],"912":["STAZIONE MONTE MARIO",""],"027":["BORGO TICINO","RIVOLI"],"495L":["_",""],"787":["VAL FIORITA",""],"028":["STAZIONE AURELIA","SAN BASILIDE"],"711":["VILLA BONELLI",""],"889":["VAL CANNUTA/CONFORTI","MAZZACURATI"],"088":["GIANICOLENSE/CASALETTO","DELLA GIOVANNA/ZOO GRUNWALD"],"036L":["STAZIONE CESANO",""],"088F":["GIANICOLENSE/CASALETTO","DELLA GIOVANNA/ZOO GRUNWALD"],"024":["ANGUILLARESE/ASL CASACCIA",""],"C1":["STAZIONE MONTEBELLO",""],"066":["STAZIONE CRISTOFORO COLOMBO","STAZIONE CRISTOFORO COLOMBO"],"999":["STAZIONE MONTE MARIO",""],"C19":["PIAZZALE STAZIONE DEL LIDO",""],"C6":["CIMITERO FLAMINIO","BALDELLI METRO B"],"907L":["CORNELIA",""],"663":["LARGO COLLI ALBANI METRO A","CIRO'"],"042":["CERQUETE/PORTOCANNONE","MONDAVIO"],"218":["ARDEATINA/SCUOLA PADRE FORMATO","PIAZZA DI PORTA SAN GIOVANNI METRO A"],"541":["FILLIA","MALATESTA METRO C"],"657":["VIGNALI/SCINTU","ARCO DI TRAVERTINO METRO A"],"235":["LABIA","BRESSANONE"],"040":["FADDA","STAZIONE PONTE MAMMOLO METRO B"],"505":["STAZIONE METRO ANAGNINA METRO A",""],"041":["ALBA ADRIATICA/BARISCIANO","STAZIONE PONTE MAMMOLO METRO B"],"445":["CURIONI","BOLOGNA"],"503":["STAZIONE METRO ANAGNINA METRO A",""],"441":["STAZIONE TIBURTINA METRO B","CASALE ROCCHI"],"502":["CARNEVALE","CINECITTA' METRO A"],"349":["PORRO LAMBERTENGHI",""],"444":["BONIFACIO","STAZIONE PONTE MAMMOLO METRO B"],"041F":["FADDA","STAZIONE PONTE MAMMOLO METRO B"],"533":["ANAGNINA METRO A","ANAGNINA METRO A"],"339":["PORRO LAMBERTENGHI",""],"660":["ARCO DI TRAVERTINO METRO A",""],"C8":["CIMITERO LAURENTINO","BALDELLI METRO B"],"665":["PIAZZA SAN GIOVANNI IN LATERANO",""],"040F":["ALBA ADRIATICA/BARISCIANO","STAZIONE PONTE MAMMOLO METRO B"]};
 
-    // Sottoinsieme dello schema gtfs-realtime.proto necessario per i TripUpdates.
-    const GTFS_RT_PROTO = `
-      syntax = "proto2";
-      package transit_realtime;
-      message FeedMessage { required FeedHeader header = 1; repeated FeedEntity entity = 2; }
-      message FeedHeader { required string gtfs_realtime_version = 1; optional uint64 timestamp = 3; }
-      message FeedEntity { required string id = 1; optional bool is_deleted = 2; optional TripUpdate trip_update = 3; }
-      message TripUpdate {
-        required TripDescriptor trip = 1;
-        optional VehicleDescriptor vehicle = 3;
-        repeated StopTimeUpdate stop_time_update = 2;
-        optional uint64 timestamp = 4;
-        optional int32 delay = 5;
-        message StopTimeEvent { optional int32 delay = 1; optional int64 time = 2; optional int32 uncertainty = 3; }
-        message StopTimeUpdate {
-          optional uint32 stop_sequence = 1;
-          optional string stop_id = 4;
-          optional StopTimeEvent arrival = 2;
-          optional StopTimeEvent departure = 3;
-          optional uint32 schedule_relationship = 5;
+    // ---- Decoder GTFS-Realtime (Protocol Buffers) -------------------------------
+    // Decoder minimo scritto a mano: legge solo i campi di gtfs-realtime.proto che servono
+    // (TripUpdates). Nessuna libreria esterna e nessun eval, compatibile con una CSP rigorosa.
+    function decodeFeed(buf) {
+      const text = new TextDecoder();
+
+      // Itera i campi di un messaggio protobuf: fn(numeroCampo, valore)
+      // valore = {lo, hi} per i varint, Uint8Array per i campi length-delimited
+      function readMessage(b, fn) {
+        let i = 0;
+        const varint = () => {
+          let lo = 0, hi = 0, shift = 0, c;
+          do {
+            if (i >= b.length) throw new Error("feed troncato");
+            c = b[i++];
+            if (shift < 28) lo |= (c & 0x7f) << shift;
+            else if (shift === 28) { lo |= (c & 0x0f) << 28; hi |= (c & 0x7f) >> 4; }
+            else hi |= (c & 0x7f) << (shift - 32);
+            shift += 7;
+          } while (c & 0x80);
+          return { lo: lo >>> 0, hi: hi >>> 0 };
+        };
+        while (i < b.length) {
+          const key = varint().lo;
+          const field = key >>> 3, wire = key & 7;
+          if (wire === 0) fn(field, varint());
+          else if (wire === 2) {
+            const len = varint().lo;
+            if (i + len > b.length) throw new Error("feed troncato");
+            fn(field, b.subarray(i, i + len));
+            i += len;
+          }
+          else if (wire === 1) i += 8;
+          else if (wire === 5) i += 4;
+          else throw new Error("wire type non supportato: " + wire);
         }
       }
-      message TripDescriptor {
-        optional string trip_id = 1; optional string route_id = 5; optional uint32 direction_id = 6;
-        optional string start_time = 2; optional string start_date = 3; optional uint32 schedule_relationship = 4;
-      }
-      message VehicleDescriptor { optional string id = 1; optional string label = 2; optional string license_plate = 3; }
-    `;
-    const FeedMessage = protobuf.parse(GTFS_RT_PROTO, { keepCase: true }).root.lookupType("transit_realtime.FeedMessage");
+      const u64 = (v) => v.hi * 4294967296 + v.lo;  // uint64/int64 positivi (timestamp)
+      const i32 = (v) => v.lo | 0;                   // int32 con segno (delay)
+      const str = (v) => text.decode(v);
+
+      const event = (b) => {               // TripUpdate.StopTimeEvent
+        const e = {};
+        readMessage(b, (f, v) => { if (f === 1) e.delay = i32(v); else if (f === 2) e.time = u64(v); });
+        return e;
+      };
+      const stopTimeUpdate = (b) => {      // TripUpdate.StopTimeUpdate
+        const s = {};
+        readMessage(b, (f, v) => {
+          if (f === 4) s.stop_id = str(v);
+          else if (f === 2) s.arrival = event(v);
+          else if (f === 3) s.departure = event(v);
+          else if (f === 5) s.schedule_relationship = v.lo;
+        });
+        return s;
+      };
+      const tripDescriptor = (b) => {
+        const t = {};
+        readMessage(b, (f, v) => {
+          if (f === 1) t.trip_id = str(v);
+          else if (f === 2) t.start_time = str(v);
+          else if (f === 5) t.route_id = str(v);
+          else if (f === 6) t.direction_id = v.lo;
+        });
+        return t;
+      };
+      const vehicleDescriptor = (b) => {
+        const d = {};
+        readMessage(b, (f, v) => { if (f === 1) d.id = str(v); else if (f === 2) d.label = str(v); });
+        return d;
+      };
+      const tripUpdate = (b) => {
+        const tu = { stop_time_update: [] };
+        readMessage(b, (f, v) => {
+          if (f === 1) tu.trip = tripDescriptor(v);
+          else if (f === 2) tu.stop_time_update.push(stopTimeUpdate(v));
+          else if (f === 3) tu.vehicle = vehicleDescriptor(v);
+        });
+        return tu;
+      };
+
+      const feed = { header: {}, entity: [] };
+      readMessage(buf, (f, v) => {
+        if (f === 1) readMessage(v, (hf, hv) => { if (hf === 3) feed.header.timestamp = u64(hv); });
+        else if (f === 2) {
+          const ent = {};
+          readMessage(v, (ef, ev) => {
+            if (ef === 2) ent.is_deleted = ev.lo === 1;
+            else if (ef === 3) ent.trip_update = tripUpdate(ev);
+          });
+          feed.entity.push(ent);
+        }
+      });
+      return feed;
+    }
 
     // ---- UI refs --------------------------------------------------------------
     const $ = (id) => document.getElementById(id);
     const stopInput = $('stopCode');
     const lineInput = $('lineFilter');
-    const proxyInput = $('customProxy');
     const btn = $('refreshBtn');
     const status = $('status');
     const table = $('table');
@@ -741,8 +799,6 @@
 
     // ---- Download feed tramite proxy -----------------------------------------
     function proxyCandidates() {
-      const custom = proxyInput.value.trim();
-      if (custom) return [{ name: "personalizzato", tpl: custom.includes('{') ? custom : custom + '{url}' }];
       // Metti per primo l'ultimo proxy che ha funzionato
       const last = localStorage.getItem('gtfsLastProxy');
       return [...PROXIES].sort((a, b) => (b.name === last) - (a.name === last));
@@ -920,7 +976,7 @@
       setStatus("Caricamento…");
       try {
         const [bytes] = await Promise.all([fetchFeedBytes(), ...codes.map(loadStopName)]);
-        const feed = FeedMessage.toObject(FeedMessage.decode(bytes), { longs: Number, defaults: false, arrays: true });
+        const feed = decodeFeed(bytes);
         renderData(extractArrivals(feed, codes, lines));
         const feedTs = feed.header && feed.header.timestamp ? new Date(feed.header.timestamp * 1000) : new Date();
         lastUpdate.textContent = feedTs.toLocaleString('it-IT');
@@ -968,7 +1024,7 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
     btn.addEventListener('click', fetchArrivals);
-    for (const [el, key] of [[stopInput, 'gtfsStopCodes'], [lineInput, 'gtfsLineFilter'], [proxyInput, 'gtfsCustomProxy']]) {
+    for (const [el, key] of [[stopInput, 'gtfsStopCodes'], [lineInput, 'gtfsLineFilter']]) {
       const saved = localStorage.getItem(key);
       if (saved !== null) el.value = saved;
       el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { localStorage.setItem(key, el.value.trim()); fetchArrivals(); } });
