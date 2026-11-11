@@ -665,12 +665,14 @@
   <script src="https://cdn.jsdelivr.net/npm/protobufjs@7.4.0/dist/protobuf.min.js" crossorigin="anonymous"></script>
   <script>
     // ---- Sorgenti dati ------------------------------------------------------
-    const FEED_URL = "https://romamobilita.it/sites/default/files/rome_rtgtfs_trip_updates_feed.pb";
+    const FEED_URL = "https://romamobilita.it/wp-content/uploads/shared/rome_rtgtfs_trip_updates_feed.pb";
     const ATAC_STOP_INFO = "https://viaggiacon.atac.roma.it/proxy/proxy.ashx?url=url.tpPortalStopInfo/stopCode=";
 
     // Proxy CORS provati in ordine; {url} = URL del feed codificato, {raw} = non codificato.
     // Il primo diretto serve nel caso Roma Mobilità abiliti CORS in futuro.
     const PROXIES = [
+      // Worker Cloudflare personale (vedi cloudflare-worker.js): restituisce sempre il feed
+      { name: "worker Cloudflare", tpl: "https://feed-atac.criogenic.workers.dev/" },
       { name: "diretto", tpl: "{raw}" },
       { name: "corsproxy.io", tpl: "https://corsproxy.io/?url={url}" },
       { name: "allorigins", tpl: "https://api.allorigins.win/raw?url={url}" },
