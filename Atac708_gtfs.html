@@ -1,0 +1,983 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tempi bus in arrivo - GTFS-RT Roma</title>
+  <style>
+    :root {
+      --bg: #030711;
+      --bg-accent: #0b152d;
+      --card: rgba(15, 23, 42, 0.85);
+      --card-border: #1f2937;
+      --muted: #94a3b8;
+      --text: #f8fafc;
+      --ok: #22c55e;
+      --warn: #f59e0b;
+      --err:#ef0020;
+      --warn2: #ef4444;
+      --accent: #7dd3fc;
+      --accent-strong: #38bdf8;
+      font-family: "Inter", "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(180deg, #0a0f1f 0%, #030711 60%, #000000 100%);
+      color: var(--text);
+      font-family: var(--font-family, "Inter", "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif);
+      min-height: 100vh;
+    }
+
+    body {
+      display: flex;
+      justify-content: center;
+    }
+
+    .wrap {
+      width: min(960px, 100%);
+      padding: 30px 20px 40px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 1.7rem;
+      margin: 0 0 16px;
+      font-weight: 600;
+      letter-spacing: .02em;
+      color: #e2e8f0;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 28px;
+      padding: 24px;
+      box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(30px);
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 14px;
+      font-size: .95rem;
+    }
+
+    .row label {
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+
+    input[type="text"] {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 12px 14px;
+      font-size: 1rem;
+      transition: border .2s ease, box-shadow .2s ease;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, .04);
+    }
+
+    input[type="number"] {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      color: var(--text);
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: .9rem;
+      width: 60px;
+      transition: border .2s ease, box-shadow .2s ease;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, .04);
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border: 1px solid var(--accent-strong);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.25);
+    }
+
+    .threshold-inputs {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .threshold-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: .85rem;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border: 1px solid var(--accent-strong);
+      box-shadow: 0 0 0 4px rgba(56, 189, 248, 0.25);
+    }
+
+    button {
+      background: linear-gradient(135deg, var(--accent-strong), #1d4ed8);
+      color: #0f172a;
+      border: 0;
+      border-radius: 14px;
+      padding: 10px 18px;
+      font-weight: 700;
+      font-size: .95rem;
+      cursor: pointer;
+      box-shadow: 0 15px 25px rgba(7, 14, 25, 0.5);
+      transition: transform .2s ease, box-shadow .2s ease, filter .2s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 18px 30px rgba(7, 14, 25, 0.55);
+    }
+
+    button:active {
+      transform: scale(.98);
+    }
+
+    button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 80px 1fr 120px;
+      gap: 12px;
+      font-size: 1.2rem;
+      background: rgba(15, 23, 42, 0.5);
+      border-radius: 20px;
+      padding: 14px;
+      width: 100%;
+    }
+
+    .grid-row {
+      display: contents;
+      cursor: pointer;
+    }
+
+    .grid-row .td {
+      transition: background .2s ease;
+    }
+
+    .grid-row:hover .td {
+      background: rgba(56, 189, 248, 0.1);
+      border-radius: 8px;
+    }
+
+    button.auto {
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.8) inset, 0 15px 25px rgba(7, 14, 25, 0.4);
+    }
+
+    button[data-interval="0"] {
+      background: #1f2937;
+      color: #cbd5e1;
+      border: 1px solid #334155;
+      box-shadow: none;
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      backdrop-filter: blur(8px);
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      background: var(--card);
+      border: 1px solid var(--card-border);
+      border-radius: 24px;
+      padding: 24px;
+      max-width: 500px;
+      width: 90%;
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 1.3rem;
+      color: #e2e8f0;
+    }
+
+    .modal-close {
+      background: rgba(255, 255, 255, 0.1);
+      color: #e2e8f0;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.15);
+    }
+
+    .detail-row:last-child {
+      border-bottom: none;
+    }
+
+    .detail-label {
+      color: var(--muted);
+      font-size: .85rem;
+      font-weight: 600;
+    }
+
+    .detail-value {
+      color: var(--text);
+      font-size: .9rem;
+    }
+
+    .controls-toggle {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 12px;
+      padding: 10px 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      transition: background .2s ease;
+    }
+
+    .controls-toggle:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .controls-toggle-icon {
+      transition: transform .3s ease;
+    }
+
+    .controls-toggle.open .controls-toggle-icon {
+      transform: rotate(180deg);
+    }
+
+    .refresh-btn-small {
+      background: linear-gradient(135deg, var(--accent-strong), #1d4ed8);
+      color: #0f172a;
+      border: 0;
+      border-radius: 50%;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 1.2rem;
+      box-shadow: 0 4px 12px rgba(7, 14, 25, 0.4);
+      transition: transform .2s ease, box-shadow .2s ease;
+      margin-left: 8px;
+    }
+
+    .refresh-btn-small:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(7, 14, 25, 0.5);
+    }
+
+    .refresh-btn-small:active {
+      transform: scale(0.95);
+    }
+
+    .refresh-btn-small:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: scale(1);
+    }
+
+    .controls-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .controls-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .3s ease;
+    }
+
+    .controls-panel.open {
+      max-height: 400px;
+    }
+
+    .controls-content {
+      padding: 0 0 12px 0;
+    }
+
+    .th {
+      font-weight: 600;
+      border-bottom: 1px solid rgba(226, 232, 240, 0.25);
+      padding: 10px 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-size: .9rem;
+    }
+
+    .td {
+      padding: 10px 6px;
+      min-height: 48px;
+      font-size: 1.2rem;
+    }
+
+    .td.arrival-cell {
+      font-size: 1.4rem;
+      text-align: right;
+    }
+
+    .td.arrival-cell .badge {
+      font-size: 1.1rem;
+      padding: 6px 16px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: .95rem;
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .ok {
+      background: #22c55e;
+      color: #0f172a;
+      border: 1px solid #15803d;
+    }
+
+    .warn {
+      background: #fbbf24;
+      color: #331a00;
+      border: 1px solid #b45309;
+    }
+    .warn2 {
+      background: #ef4444;
+      color: #330000;
+      border: 1px solid #7f1d1d;
+    }
+
+    .err {
+      background: #ef0020;
+      color: #330000;
+      border: 1px solid #7f1d1d;
+    }
+
+    .footer {
+      margin-top: 18px;
+      font-size: .85rem;
+      line-height: 1.6;
+      color: var(--muted);
+    }
+
+    .footer a {
+      color: #7dd3fc;
+    }
+
+    .small {
+      font-size: .85rem;
+    }
+
+    .last-update {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .last-update-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: nowrap;
+    }
+
+    .last-update-row > span {
+      flex: 0 1 auto;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty {
+      padding: 10px 0;
+      color: #cbd5e1;
+      font-weight: 500;
+    }
+
+    .overflow {
+      overflow: auto;
+    }
+
+    .stop-separator {
+      grid-column: 1/-1;
+      background: rgba(56, 189, 248, 0.15);
+      padding: 8px 12px;
+      border-radius: 10px;
+      margin: 8px 0;
+      font-size: .85rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    @media (max-width: 640px) {
+
+      html,
+      body {
+        background: linear-gradient(180deg, #030711, #02030b, #010104);
+      }
+
+      .wrap {
+        padding: 12px 10px 24px;
+      }
+
+      h1 {
+        font-size: 1.25rem;
+        margin: 0 0 12px;
+      }
+
+      .card {
+        padding: 14px;
+        border-radius: 20px;
+      }
+
+      .row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+
+      .last-update-row {
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+      }
+
+      .row span,
+      .row label {
+        width: 100%;
+        font-size: .85rem;
+      }
+
+      .last-update-row > span {
+        width: auto !important;
+      }
+
+      .overflow {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -14px;
+        padding: 0 14px;
+      }
+
+      .grid {
+        grid-template-columns: 60px 1fr 100px;
+        gap: 8px;
+        font-size: 1.05rem;
+        padding: 10px;
+        width: 100%;
+        min-width: 100%;
+      }
+
+      .th {
+        font-size: .75rem;
+        padding: 6px 3px;
+      }
+
+      .td {
+        font-size: 1.05rem;
+        padding: 6px 3px;
+        min-height: 40px;
+      }
+
+      .td.arrival-cell {
+        font-size: 1.2rem;
+      }
+
+      .td.arrival-cell .badge {
+        font-size: .95rem;
+        padding: 5px 12px;
+      }
+
+      .badge {
+        font-size: .8rem;
+        padding: 4px 10px;
+      }
+
+      button {
+        border-radius: 10px;
+        font-size: .8rem;
+        padding: 8px 12px;
+      }
+
+      input[type="text"] {
+        font-size: .9rem;
+        padding: 10px 12px;
+        border-radius: 10px;
+      }
+    }
+    button.modal-close { padding: 0; box-shadow: none; }
+  </style>
+</head>
+
+
+<body>
+  <div class="wrap">
+    <center>
+      <h1>Tempi degli autobus in arrivo</h1>
+    </center>
+
+    <div class="card">
+      <div class="row small last-update-row">
+        <span>Ultimo aggiornamento: <span id="lastUpdate" class="last-update">–</span></span>
+        <button id="refreshBtn" class="refresh-btn-small" title="Aggiorna" aria-label="Aggiorna">↻</button>
+      </div>
+
+      <div id="stopMeta" class="small muted"></div>
+
+      <div class="overflow" style="margin-top:10px">
+        <div id="table" class="grid" role="table" aria-label="Arrivi"></div>
+      </div>
+
+      <div class="controls-toggle" id="controlsToggle" role="button" tabindex="0" aria-controls="controlsPanel">
+        <div class="controls-header">
+          <span style="font-weight:600;font-size:.95rem;">Impostazioni</span>
+          <span class="controls-toggle-icon">▼</span>
+        </div>
+      </div>
+      <div class="controls-panel" id="controlsPanel">
+        <div class="controls-content">
+          <div class="row">
+            <label for="stopCode">Codice palina</label>
+            <input id="stopCode" type="text" value="70376,70978" inputmode="text" placeholder="es: 70376, 70377" />
+            <span id="status" class="muted small">Pronto</span>
+          </div>
+
+          <div class="row">
+            <label for="lineFilter">Filtra linee</label>
+            <input id="lineFilter" type="text" value="" inputmode="text" placeholder="vuoto = tutte (es: 708, 779)" />
+          </div>
+
+          <div class="row small">
+            <span>Frequenza auto-aggiornamento:</span>
+            <button data-interval="30000">30s</button>
+            <button data-interval="60000">60s</button>
+            <button data-interval="120000">2 min</button>
+            <button data-interval="0" class="auto">Disattiva auto</button>
+            <span class="muted">(<span id="autoInfo">disattivato</span>)</span>
+          </div>
+
+          <div class="row small">
+            <span>Soglie badge (minuti):</span>
+            <div class="threshold-inputs">
+              <div class="threshold-item">
+                <label for="thresholdRed" style="color:#ef4444;">● Rosso ≤</label>
+                <input type="number" id="thresholdRed" value="1" min="0" max="99" />
+              </div>
+              <div class="threshold-item">
+                <label for="thresholdYellow" style="color:#fbbf24;">● Giallo ≤</label>
+                <input type="number" id="thresholdYellow" value="3" min="0" max="99" />
+              </div>
+              <div class="threshold-item">
+                <label for="thresholdOrange" style="color:#f59e0b;">● Arancio ≤</label>
+                <input type="number" id="thresholdOrange" value="10" min="0" max="99" />
+              </div>
+            </div>
+          </div>
+
+          <div class="row small">
+            <label for="customProxy">Proxy CORS personalizzato</label>
+            <input id="customProxy" type="text" value="" placeholder="es: https://mio-proxy.example/?url={url}  (vuoto = automatico)" />
+          </div>
+          <div class="row small muted">Proxy in uso: <span id="proxyInfo">–</span></div>
+        </div>
+      </div>
+      <div class="footer muted small">
+        Fonte: <a href="https://romamobilita.it/it/tecnologie/open-data" target="_blank" rel="noopener noreferrer">Roma Mobilità – GTFS-Realtime</a>.
+        Il feed non consente l'accesso diretto dal browser (CORS), quindi viene letto tramite un proxy CORS pubblico.
+        La direzione mostrata è il capolinea prevalente della linea in quel senso di marcia.
+      </div>
+    </div>
+  </div>
+
+  <div id="detailModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 id="detailTitle">Dettagli autobus</h2>
+        <button class="modal-close" id="modalClose" aria-label="Chiudi">×</button>
+      </div>
+      <div class="detail-row"><span class="detail-label">Linea</span><span class="detail-value" id="detailLine"></span></div>
+      <div class="detail-row"><span class="detail-label">Direzione</span><span class="detail-value" id="detailDest"></span></div>
+      <div class="detail-row"><span class="detail-label">Arrivo</span><span class="detail-value" id="detailArrival"></span></div>
+      <div class="detail-row"><span class="detail-label">Orario previsto</span><span class="detail-value" id="detailClock"></span></div>
+      <div class="detail-row"><span class="detail-label">Ritardo</span><span class="detail-value" id="detailDelay"></span></div>
+      <div class="detail-row"><span class="detail-label">Vettura</span><span class="detail-value" id="detailVehicle"></span></div>
+      <div class="detail-row"><span class="detail-label">Corsa</span><span class="detail-value" id="detailTrip"></span></div>
+    </div>
+  </div>
+
+  <!-- protobuf.js (versione bloccata) per decodificare il feed GTFS-Realtime -->
+  <script src="https://cdn.jsdelivr.net/npm/protobufjs@7.4.0/dist/protobuf.min.js" crossorigin="anonymous"></script>
+  <script>
+    // ---- Sorgenti dati ------------------------------------------------------
+    const FEED_URL = "https://romamobilita.it/sites/default/files/rome_rtgtfs_trip_updates_feed.pb";
+    const ATAC_STOP_INFO = "https://viaggiacon.atac.roma.it/proxy/proxy.ashx?url=url.tpPortalStopInfo/stopCode=";
+
+    // Proxy CORS provati in ordine; {url} = URL del feed codificato, {raw} = non codificato.
+    // Il primo diretto serve nel caso Roma Mobilità abiliti CORS in futuro.
+    const PROXIES = [
+      { name: "diretto", tpl: "{raw}" },
+      { name: "corsproxy.io", tpl: "https://corsproxy.io/?url={url}" },
+      { name: "allorigins", tpl: "https://api.allorigins.win/raw?url={url}" },
+      { name: "codetabs", tpl: "https://api.codetabs.com/v1/proxy?quest={raw}" },
+      { name: "cors.eu.org", tpl: "https://cors.eu.org/{raw}" }
+    ];
+
+    // Capolinea prevalente per linea e direction_id, estratto dal GTFS statico (trips.txt).
+    const HEADSIGNS = {"T01":["ANAGNINA (MA)",""],"C11":["CIMITERO LAURENTINO","CINECITTA' (MA)"],"T10":["TOR VERGATA/SCHIAVONETTI",""],"C13":["CIMITERO LAURENTINO","P.LE STAZIONE DEL LIDO (RL)"],"C20":["LENORMANT/ZELIA NUTTAL",""],"P02":["REPUBBLICA (MA)",""],"C2":["CIMITERO FLAMINIO","TERMINI (MA-MB-FS)"],"P20":["PORTONACCIO/TIBURTINA",""],"C3":["STAZ.NE TIBURTINA (MB)","CIMITERO FLAMINIO"],"C4":["CIMITERO FLAMINIO","P.LE STAZIONE DEL LIDO (RL)"],"C5":["STAZIONE MONTEBELLO (RV)","P. ZA DELLE CAMELIE"],"C7":["CIMITERO FLAMINIO","LAURENTINA (MB)"],"C9":["S. VITTORINO","ROMANISTI/MARFORIO"],"L01":["LAURENTINA (MB)",""],"H":["TERMINI (MA-MB-FS)","DEI CAPASSO"],"L80":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L10":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L08":["TERMINI (MA-MB-FS)",""],"A01":["TERMINI (MA-MB-FS)",""],"A10":["PRENESTINA/LARICI",""],"nMB":["REBIBBIA (MB)","LAURENTINA (MB)"],"nMC":["P.ZA VENEZIA","PANTANO (MC)"],"A05":["GROTTE CELONI (MC)",""],"n11":["GROTTE CELONI (MC)","P.ZA VENEZIA"],"A50":["PRENESTINA/CANDIANI",""],"C02":["BALENIERE/INPS",""],"01":["P.LE STAZIONE DEL LIDO (RL)","P.LE STAZIONE DEL LIDO (RL)"],"012":["OSTIENSE/STAZ.NE ACILIA (RL)",""],"06":["WOLF FERRARI/BAZZINI","P.LE STAZIONE DEL LIDO (RL)"],"065":["ALTAMURA/BERTOLLA","WOLF FERRARI/BAZZINI"],"014":["P.LE STAZIONE DEL LIDO (RL)","ANTIFANE/ISOLA 46"],"016F":["TORCEGNO/CASTEL PORZIANO","MONTI S. PAOLO/CONFORTI"],"016":["ANTIFANE/ISOLA 46","MONTI S. PAOLO/CONFORTI"],"020":["STAZ.NE PRIMA PORTA",""],"021":["GROTTAROSSA/ISTITUTO ASISIUM","STAZ.NE LA GIUSTINIANA (FL3)"],"029":["L.GO SPERLONGA","STAZIONE SAXA RUBRA"],"03":["ALTAMURA/BERTOLLA",""],"04B":["OSTIENSE/STAZ.NE ACILIA (RL)",""],"04":["VILLANI R./CUPOLE","P.LE STAZIONE DEL LIDO (RL)"],"043":["ORTUCCHIO","REBIBBIA (MB)"],"P03":["PONTE MAMMOLO (MB)",""],"P30":["PORTONACCIO/TIBURTINA",""],"045":["GROTTE CELONI","ORTONA DEI MARSI/MONTENERODOMO"],"046":["ANAGNINA (MA)",""],"047":["ANAGNINA (MA)",""],"C03":["MAR ROSSO/MARE GLACIALE ARTICO",""],"05B":["EBRIDI/MERCATO","MAR ROSSO/MARE GLACIALE ARTICO"],"C30":["LENORMANT/ZELIA NUTTAL",""],"05":["IDROSCALO/BASTIMENTI","MAR ROSSO/MARE GLACIALE ARTICO"],"052":["PANTANO (MC)",""],"058F":["GROTTE CELONI (MC)","LONGONI/INPS"],"058":["TOR VERGATA/MEDICINA","PONTE MAMMOLO (MB)"],"063":["OSTIENSE/STAZ.NE ACILIA (RL)",""],"070":["STAZ.NE CRISTOFORO COLOMBO (RL)","EUR FERMI (MB)"],"C10":["ROMAGNOLI/DONATI",""],"C01":["COLOMBO/PALAZZO SPORT",""],"07":["LITORANEA/VILLAGGIO TOGNAZZI","STAZ.NE CRISTOFORO COLOMBO (RL)"],"071":["BRUNETTI/CASTEL DI LEVA",""],"073":["STRAMPELLI","BRUNETTI/CASTEL DI LEVA"],"074":["PAPIRI","BRUNETTI/CASTEL DI LE"],"075":["PONTE MAMMOLO (MB)","TONINO BELLO"],"089":["PORTUENSE/EX DAZIO","CASALE LUMBROSO/FONTEBASSO"],"09":["CASTEL BOLOGNESE/STAZ. VITINIA",""],"100":["PORTA PINCIANA",""],"104":["PARCO DI CENTOCELLE (MC)",""],"105L":["PARCO DI CENTOCELLE (MC)",""],"105":["PARCO DI CENTOCELLE (MC)",""],"106":["GROTTE CELONI (MC)","PARCO DI CENTOCELLE (MC)"],"107":["GROTTE CELONI (MC)","MONDAVIO"],"A06":["STAZ.NE TIBURTINA (MB)",""],"111":["STAZ.NE TIBURTINA (MB)",""],"A60":["PRENESTINA/LARICI",""],"113":["L.GO PRENESTE",""],"115":["PAOLA",""],"117":["PZA S. GIOVANNI IN LATERANO (H)",""],"118":["APPIA/VILLA DEI QUINTILI",""],"119":["PZA VENEZIA",""],"120F":["VILLA BORGHESE/WASHINGTON","RECANATI"],"128":["CROCCO","BALDELLI (MB)"],"14NAV":["L.GO PRENESTE","TOGLIATTI/MOLFETTA"],"14":["TERMINI (MA-MB-FS)","TOGLIATTI"],"150F":["VILLA BORGHESE/WASHINGTON","TONINO BELLO"],"160":["VILLA BORGHESE/WASHINGTON","MONTAGNOLA"],"L70":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L03":["COLOMBO/RUFINO",""],"L06":["ARCO DI TRAVERTINO (MA)",""],"16":["XX SETTEMBRE","COSTAMAGNA"],"L60":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"163":["REBIBBIA (MB)","VERANO"],"168":["L.GO M.LLO DIAZ","STAZ.NE TIBURTINA (MB)"],"G05":["MANCINI",""],"201":["CONTI ANTONIO/PULLE'","MANCINI"],"170":["AGRICOLTURA","TERMINI (MA-MB-FS)"],"L50":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L05":["AGRICOLTURA",""],"180F":["DALLA CHIESA","MAZZACURATI"],"G07":["CLODIO",""],"188":["L.GO DIAZ",""],"19BUS":["GIULIO CESARE/OTTAVIANO (MA)","GERANI"],"19L":["VALLE GIULIA","GERANI"],"19NAV":["GIULIO CESARE/OTTAVIANO (MA)","VALLE GIULIA"],"190F":["MOMBASIGLIO","P.ZA VENEZIA"],"2BUS":["MANCINI","P.LE FLAMINIO (MA)"],"20L":["ANAGNINA (MA)",""],"200":["STAZ.NE PRIMA PORTA","MANCINI"],"G50":["STAZIONE GROTTAROSSA",""],"20":["ANAGNINA (MA)","CAMBELLOTTI"],"2":["MANCINI","FLAMINIO"],"211F":["CIMONE/MONTE ACERO","PIETRALATA (MB)"],"211":["CIMONE/MONTE ACERO","STAZ.NE TIBURTINA (MB)"],"223":["TERMINI (MA-MB-FS)","STAZ.NE LA GIUSTINIANA (FL3)"],"G40":["STAZIONE GROTTAROSSA",""],"228":["STAZ.NE TRASTEVERE","STAZ.NE TRASTEVERE"],"230":["SACRO CUORE DI MARIA/EUCLIDE","MOSCHEA/FORTE ANTENNE"],"23":["CLODIO","PINCHERLE/PARRAVANO"],"G70":["STAZIONE GROTTAROSSA",""],"M03":["CORNELIA (MA)",""],"246P":["CASTEL DI GUIDO/AURELIA","CORNELIA (MA)"],"M30":["CANDONI/MAGLIANA (H)",""],"246":["MALAGROTTA","CORNELIA (MA)"],"247":["STAZ.NE METRO CIPRO (MA)","STAZ.NE AURELIA"],"252":["POLICLINICO (MB)",""],"280":["PARTIGIANI (FS)","MANCINI"],"3BUS":["VALLE GIULIA","STAZ.NE TRASTEVERE (FS)"],"3L":["P.ZA DI PORTA MAGGIORE","STAZ.NE TRASTEVERE (FS)"],"3NAV":["VALLE GIULIA","P.ZA DI PORTA MAGGIORE"],"30":["CLODIO","LAURENTINA (MB)"],"301":["GROTTAROSSA/ISTITUTO ASISIUM","GIULIO CESARE/LEPANTO (MA)"],"303":["STAZ.NE LA GIUSTINIANA (FL3)","STAZ.NE PRIMA PORTA"],"309":["S. MARIA DEL SOCCORSO (MB)","STAZ.NE TIBURTINA (MB)"],"3":["VALLE GIULIA","STAZ.NE TRASTEVERE (FS)"],"310":["TERMINI (MA-MB-FS)","VESCOVIO"],"A70":["PRENESTINA/MANFREDONIA",""],"31":["LAURENTINA (MB)","CLODIO"],"311":["L.GO VALSABBIA","REBIBBIA (MB)"],"313":["TORRE MAURA (MC)","LONGONI/INPS"],"765":["ARCO DI TRAVERTINO (MA)","LAURENTINA (MB)"],"319":["BALSAMO CRIVELLI",""],"32":["STAZIONE SAXA RUBRA","GIULIO CESARE/OTTAVIANO (MA)"],"33":["LENIN","CLODIO"],"334":["BASEGGIO","RIMESSA ATAC GROTTAROSSA"],"336":["VAL D'ALA STAZIONE (FS)","QUARRATA"],"337":["VIA MANZONI/TOR LUPARA","CONCA D'ORO/PELAGOSA"],"G06":["VIMERCATI/ATENEO SALESIANO",""],"338":["MARMORALE","VAL D'AOSTA/STAZ.NE NOMENTANA"],"M05":["SIRTORI/FORTE PORTUENSE",""],"M50":["CANDONI/MAGLIANA (H)",""],"34":["PAOLA",""],"341":["SASSOFELTRIO/STAZ.NE FIDENE (FL1)","PONTE MAMMOLO (MB)"],"344":["ERETUM","STAZ.NE NUOVO SALARIO"],"G60":["STAZIONE SAXA RUBRA",""],"A07":["FUCINI/DAVANZATI",""],"350":["PONTE MAMMOLO (MB)","STAZ.NE NUOVO SALARIO"],"351":["L.GO SOMALIA","ANTAMORO G./CASTELLANI"],"360":["ZAMA","MUSE"],"L30":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"38":["TERMINI (MA-MB-FS)","PORTA DI ROMA"],"P10":["PORTONACCIO/TIBURTINA",""],"40":["TERMINI (MA-MB-FS)",""],"409":["ARCO DI TRAVERTINO (MA)","STAZ.NE TIBURTINA (MB)"],"412":["OLEVANO ROMANO","ADRIA"],"424":["PONTE MAMMOLO (MB)",""],"435":["VAL DI LANZO","PORTA DI ROMA"],"44":["TEATRO MARCELLO","MONTALCINI"],"443":["REBIBBIA (MB)",""],"L07":["ARA COELI/P.ZA VENEZIA",""],"446":["MANCINI","CORNELIA (MA)"],"448":["BALSAMO CRIVELLI",""],"450":["ALESSANDRINO","MONTI TIBURTINI/PERTINI (H)"],"451":["CINECITTA' (MA)","PONTE MAMMOLO (MB)"],"46B":["BATTISTINI/SORIA","ROSI"],"46":["P.ZA VENEZIA","STAZ.NE MONTE MARIO (FS-FL3)"],"490":["CORNELIA (MA)","STAZ.NE TIBURTINA (MB)"],"49":["P.ZA CAVOUR","OSPEDALE S. FILIPPO NERI (H)"],"492":["STAZ.NE METRO CIPRO (MA)","STAZ.NE TIBURTINA (MB)"],"495":["VALLE AURELIA/BONACCORSI","STAZ.NE TIBURTINA (MB)"],"916":["ANDERSEN","P.ZA VENEZIA"],"500":["TORRE ANGELA (MC)","ANAGNINA (MA)"],"504":["ANAGNINA (MA)",""],"506":["GROTTE CELONI (MC)","ANAGNINA (MA)"],"507":["GROTTE CELONI (MC)","ANAGNINA (MA)"],"508":["MONDAVIO","PONTE MAMMOLO (MB)"],"509":["FOSSO DEL CAVALIERE/CNR","ANAGNINA (MA)"],"5":["TERMINI (MA-MB-FS)","GERANI"],"51":["SAN GIOVANNI (MA - MC)",""],"514":["TERMINI (MA-MB-FS)","L.GO PRENESTE"],"515":["KENNEDY/STAZIONE FS CIAMPINO","ANAGNINA (MA)"],"520":["CINECITTA' (MA)",""],"52":["ARCHIMEDE",""],"53":["MANCINI",""],"542":["VERANO","P. ZA DELLE CAMELIE"],"544":["BRESSANONE/S. AGNESE ANNIBALIANO (MB1)","PARCO DI CENTOCELLE (MC)"],"545":["S. LUCA EVANGELISTA","VERANO"],"551":["VIGNE DI MORENA","ANAGNINA (MA)"],"556":["GARDENIE","ANAGNINA (MA)"],"557":["TORRE MAURA","P.ZA CARDINALI"],"558":["CINECITTA' (MA)","GARDENIE"],"559":["CINECITTA (MA)","ANAGNINA (MA)"],"590":["STAZ.NE METRO CIPRO (MA)","CINECITTA' (MA)"],"T20":["TOR VERGATA/SCHIAVONETTI",""],"G03":["RIPETTA",""],"60":["LGO PUGLIESE","P.ZA VENEZIA"],"F01":["P.ZA VENEZIA",""],"F10":["LAURENTINA/CELINE",""],"61":["VILLA BORGHESE/WASHINGTON","BALSAMO CRIVELLI"],"62":["P.ZA STAZIONE S. PIETRO (FL)","STAZ.NE TIBURTINA (MB)"],"T02":["ARCO DI TRAVERTINO (MA)",""],"628":["VOLPI/FARNESINA","BARONIO"],"63":["P.ZA MONTE SAVELLO (H)","ROSSELLINI"],"64":["P.ZA STAZIONE S. PIETRO (FL)","TERMINI (MA-MB-FS)"],"649":["STAZ.NE TIBURTINA (MB)","ZAMA"],"654":["CAMPO FARNIA/PELLARO",""],"66":["MARX","TERMINI (MA-MB-FS)"],"664":["L.GO COLLI ALBANI (MA)",""],"669":["PINCHERLE/PARRAVANO",""],"670":["PINCHERLE/PARRAVANO",""],"671":["NERVI/PALAZZO SPORT","ARCO DI TRAVERTINO (MA)"],"L20":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L02":["NERVI/PALAZZO SPORT",""],"69":["CLODIO","L.GO PUGLIESE"],"700":["CHIANESI (H)","EUR FERMI (MB)"],"70":["GIOLITTI","CLODIO"],"G04":["P.LE FLAMINIO (MA)",""],"705":["PIERMARINI","EUR FERMI (MB)"],"706":["ROTELLINI","EUR FERMI (MB)"],"708":["BERTASI BONELLI","AGRICOLTURA"],"709":["TIMOCLE","EUR FERMI (MB)"],"71":["STAZ.NE TIBURTINA (MB)",""],"712":["EUR FERMI (MB)","ORTOLANI"],"713":["BOSCO ARVALI",""],"714":["TERMINI (MA-MB-FS)","NERVI/PALAZZO SPORT"],"715":["TEATRO MARCELLO","TIBERIO IMPERATORE"],"716":["TEATRO MARCELLO","BALLARIN"],"719":["PARTIGIANI (FS)","CROCCO/MERCANTI"],"720":["LAURENTINA (MB)",""],"72":["GUGLIELMO GUASTA","LAURENTINA (MB)"],"731":["DINO VIOLA","EROI DI RODI/CONSOLE"],"74":["LAURENTINA (MB)","BRUNETTI"],"723":["LAURENTINA (MB)",""],"724":["AGRICOLTURA","GADDA"],"73":["GUGLIELMO GUASTA","AGRICOLTURA"],"75":["INDIPENDENZA","POERIO/MARINO"],"762":["AGRICOLTURA",""],"763":["CASTELLO DELLA CECCHIGNOLA","LAURENTINA (MB)"],"766":["MILLEVOI","STAZ.NE TRASTEVERE (FS)"],"767":["AGRICOLTURA",""],"769":["LONDRA","P.LE OSTIENSE-PIRAMIDE (MB-RL)"],"L40":["CARUCCI/ANAGRAFE TRIBUTARIA",""],"L04":["PARTIGIANI-STAZ.NE OSTIENSE (FS)",""],"77":["PLE OSTIENSE-PIRAMIDE (MB - RL)",""],"772":["EUR FERMI (MB)",""],"773":["BOSCO ARVALI","STAZ.NE TRASTEVERE"],"786":["REDUZZI","STAZ.NE TRASTEVERE"],"774":["STAZ.NE TRASTEVERE (FS)","MONTALCINI/RIPANDELLI"],"775":["PLE OSTIENSE-PIRAMIDE (MB-RL)","NAZZANI"],"779F":["AGRICOLTURA",""],"779":["AGRICOLTURA",""],"780":["PARTIGIANI","NERVI/PALAZZO SPORT"],"781":["P.ZA VENEZIA","MAGLIANA/SCARPERIA"],"786F":["BOSCO ARVALI","STAZ.NE TRASTEVERE"],"M04":["COLLI PORTUENSI/GIANICOLENSE",""],"788":["AGRICOLTURA","BRUNETTI/CASTEL DI LEVA"],"791":["CORNELIA (MA)","NERVI/PALAZZO SPORT"],"792":["PORTA S. GIOVANNI (MA)","EUDES"],"795":["GIUFFRE'/MONDADORI","VALGRISI"],"8BUS":["ASTALLI/VENEZIA","GIANICOLENSE/CASALETTO"],"80":["P.ZA VENEZIA","PORTA DI ROMA"],"8":["VENEZIA","CASALETTO"],"81":["CRESCENZIO/RISORGIMENTO","MALATESTA (MC)"],"82":["MONTE SACRO",""],"83":["PARTIGIANI (FS)","L.GO VALSABBIA"],"85":["TERMINI (MA-MB-FS)","ARCO DI TRAVERTINO (MA)"],"86":["CONCA D'ORO/PELAGOSA","CANETTI"],"870":["TRULLO","PAOLA"],"87":["GIULIO CESARE/LEPANTO (MA)","L.GO COLLI ALBANI (MA)"],"871":["STAZ.NE TRASTEVERE",""],"88":["VERANO","LABIA"],"881":["PAOLA","AVANZINI/QUARTIERE INCIS"],"882":["GIANICOLENSE/CASALETTO",""],"89":["CLODIO","BRESSANONE/S.AGNESE ANNIBALIANO (MB1)"],"90":["TERMINI (MA-MB-FS)","LABIA"],"F02":["TERMINI (MA-MB-FS)",""],"F20":["LAURENTINA/CELINE",""],"904":["BEDESCHI","CORNELIA (MA)"],"905":["MALAGROTTA","CORNELIA (MA)"],"906":["CASALE LUMBROSO/FONTEBASSO","VALLE AURELIA (MA-FL3)"],"910":["INDIPENDENZA","MANCINI"],"91":["BATTISTINI/SORIA",""],"911":["OSPEDALE S. FILIPPO NERI (H)","MANCINI"],"913L":["DALLA CHIESA","STAZ.NE MONTE MARIO (FS-FL3)"],"913":["P.ZA CAVOUR","STAZ.NE MONTE MARIO (FS-FL3)"],"916F":["ANDERSEN","P.ZA VENEZIA"],"92":["TERMINI (MA-MB-FS)","MARLIANA"],"93":["PRATI FISCALI/VALLE MELAINA","MONTE S. GIUSTO"],"96":["REDUZZI","PARTIGIANI (FS)"],"980":["OSPEDALE S. FILIPPO NERI (H)","PANE A."],"98":["PAOLA","MAZZACURATI"],"981":["CANDONI/RIMESSA ATAC","CORNELIA (MA)"],"983":["CORNELIA (MA)",""],"990L":["STAZ.NE METRO CIPRO (MA)",""],"990":["LGT MARZIO","STAZ.NE MONTE MARIO (FS-FL3)"],"n041":["STAZ.NE TIBURTINA (MB)","ALBA ADRIATICA/BARISCIANO"],"n070":["AGRICOLTURA","P.LE STAZIONE DEL LIDO (RL)"],"n075":["L.GO PRENESTE","TONINO BELLO"],"n200":["STAZ.NE PRIMA PORTA","MANCINI"],"n201":["P.ZA VENEZIA","CONTI ANTONIO/PULLE'"],"n3d":["P.LE OSTIENSE-PIRAMIDE (MB-RL)",""],"n3s":["PLE OSTIENSE-PIRAMIDE (MB-RL)",""],"n409":["L.GO COLLI ALBANI (MA)","STAZ.NE TIBURTINA (MB)"],"n46":["TERMINI (MA-MB-FS)","STAZ.NE MONTE MARIO (FS-FL3)"],"n500":["CINECITTA' (MA)","POLICLINICO/TOR VERGATA (H)"],"n5":["P.ZA VENEZIA","TOGLIATTI/PALME"],"n543":["P.ZA VENEZIA","VERTUNNI"],"n551":["ANAGNINA (MA)",""],"n66":["TERMINI (MA-MB-FS)","MARX"],"n70":["TERMINI (MA-MB-FS)","CLODIO"],"n705":["PIERMARINI","LAURENTINA (MB)"],"n716":["TERMINI (MA-MB-FS)","LAURENTINA (MB)"],"n719":["STAZ.NE TRASTEVERE","CANDONI/RIMESSA ATAC"],"n74":["LAURENTINA (MB)",""],"n781":["STAZ.NE TRASTEVERE","MAGLIANA/SCARPERIA"],"n8":["TERMINI (MA-MB-FS)","DEI CAPASSO"],"n90":["P.ZA VENEZIA","MONTEGIBERTO/PIAGGE"],"n904":["P.ZA VENEZIA","BEDESCHI"],"n913":["P.ZA VENEZIA","TARSIA"],"n92":["TERMINI (MA-MB-FS)","P.ZA SEMPIONE"],"n98":["TERMINI (MA-MB-FS)","MAZZACURATI"],"nMA":["ANAGNINA (MA)","BATTISTINI/SORIA"],"nMB1":["TERMINI (MA-MB-FS)",""],"nME":["P.ZA VENEZIA","P.LE STAZIONE DEL LIDO (RL)"],"MEA":["BATTISTINI (MA)","ANAGNINA (MA)"],"MEB":["REBIBBIA (MB)","LAURENTINA (MB)"],"MEB1":["JONIO (MB1)","LAURENTINA (MB)"],"MEC":["COLOSSEO","PANTANO"],"048":["PAPIRI","BETTI/CIVICO 65"],"049":["ALESSANDRINI","BISACCIA"],"051":["GROTTE CELONI (MC)","CERQUETE/PORTACANNONE"],"053":["MARELLI/NECCHI","TORRENOVA/BITONTO"],"054":["PANTANO (MC)","COLLE MATTIA"],"055":["PANTANO (MC)","D'ASCANIO"],"056":["ROCCALUMERA/BORGHESIANA","RAIMONDI M."],"057":["GROTTE CELONI (MC)",""],"059":["MITELLI","POLICLINICO/TOR VERGATA (H)"],"135":["SALARIA/PIOMBINO","STAZ.NE TIBURTINA (MB)"],"213":["CINECITTA' (MA)","L.GO PRENESTE"],"314":["ROTELLO","L.GO PRENESTE"],"340":["DANTE DA MAIANO","MARMORALE"],"343":["PONTE MAMMOLO (MB)","VALTOURNANCHE"],"404":["S. GIOVANNI IN ARGENTELLA","REBIBBIA (MB)"],"437":["REBIBBIA (MB)",""],"447":["REBIBBIA (MB)",""],"543":["VERTUNNI/SALCITO (FL2)","GARDENIE (MC)"],"548":["CINECITTA' (MA)","STA.NE TIBURTINA (MB)/p.LE EST"],"552":["GERANI/RODODENDRI","POLICLINICO/TOR VERGATA (H)"],"555":["PANTANO (MC)","PONTE DI NONA (FL2)"],"702":["TORRE S.ANASTASIA","LAURENTINA (MB)"],"721":["CASTELLO DELLA CECCHIGNOLA",""],"764":["LONDRA","AGRICOLTURA"],"789":["CINECITTA' (MA)","AMERICA (MB)"],"789F":["AMERICA (MB)",""],"036":["STAZIONE LA STORTA",""],"081":["SABBADINO/FIERA DI ROMA",""],"037":["FIESSE","STAZIONE PRIMA PORTA"],"035":["BORGO PINETO","STAZIONE PRIMA PORTA"],"985":["STAZIONE AURELIA","EUGENIO FRATE"],"908":["GASPARRI","GRONDONA"],"08":["ANTIFANE/ISOLA 46","MONTI SAN PAOLO/CONFORTI"],"992":["STAZIONE IPOGEO DEGLI OTTAVI",""],"013":["MELLANO/REGGIOLO",""],"993":["CORNELIA METRO A","STAZIONE IPOGEO DEGLI OTTAVI"],"778":["BEATA VERGINE DEL CARMELO","AMERICA METRO B"],"030":["STAZIONE LA STORTA","TRAGLIATELLA/CIVICO 225"],"226":["PIAZZA MANCINI","GROTTAROSSA/ISTITUTO ASISIUM"],"078":["CADUTI LIBERAZIONE","TARANTELLI"],"022":["GROTTAROSSA/ISTITUTO ASISIUM","STAZIONE PRIMA PORTA"],"998":["PONDERANO","STAZIONE MONTE MARIO"],"025":["FORMICHI","MOMBASIGLIO"],"032":["STAZIONE LA STORTA",""],"771":["VIOLA","AMERICA"],"038":["STAZIONE SAXA RUBRA","VALBONDIONE"],"710":["CARINI","LENIN"],"033":["SANTA CORNELIA/BRENNA","STAZIONE PRIMA PORTA"],"701":["SABBADINO/FIERA DI ROMA","LENIN"],"031":["PIEDICAVALLO","STAZIONE LA GIUSTINIANA"],"039":["STAZIONE SAXA RUBRA","SALARIA/PIOMBINO"],"018":["ROMAGNOLI/SCAVI OSTIA ANTICA",""],"017":["OSTIENSE/STAZIONE ACILIA",""],"892":["ALDOBRANDESCHI","VALLE AURELIA"],"011":["ROMAGNOLI/SCAVI OSTIA ANTICA",""],"907":["STAZIONE LA GIUSTINIANA","CORNELIA"],"546":["STAZIONE IPOGEO DEGLI OTTAVI","VAL CANNUTA/CONFORTI"],"982":["STAZIONE QUATTRO VENTI","DICIASSETTESIMA OLIMPIADE"],"146":["MOMBASIGLIO","PINETA SACCHETTI/GEMELLI"],"808":["DEI CAPASSO","EIFFEL"],"777":["BEATA VERGINE DEL CARMELO","AGRICOLTURA"],"912":["STAZIONE MONTE MARIO",""],"027":["BORGO TICINO","RIVOLI"],"495L":["_",""],"787":["VAL FIORITA",""],"028":["STAZIONE AURELIA","SAN BASILIDE"],"711":["VILLA BONELLI",""],"889":["VAL CANNUTA/CONFORTI","MAZZACURATI"],"088":["GIANICOLENSE/CASALETTO","DELLA GIOVANNA/ZOO GRUNWALD"],"036L":["STAZIONE CESANO",""],"088F":["GIANICOLENSE/CASALETTO","DELLA GIOVANNA/ZOO GRUNWALD"],"024":["ANGUILLARESE/ASL CASACCIA",""],"C1":["STAZIONE MONTEBELLO",""],"066":["STAZIONE CRISTOFORO COLOMBO","STAZIONE CRISTOFORO COLOMBO"],"999":["STAZIONE MONTE MARIO",""],"C19":["PIAZZALE STAZIONE DEL LIDO",""],"C6":["CIMITERO FLAMINIO","BALDELLI METRO B"],"907L":["CORNELIA",""],"663":["LARGO COLLI ALBANI METRO A","CIRO'"],"042":["CERQUETE/PORTOCANNONE","MONDAVIO"],"218":["ARDEATINA/SCUOLA PADRE FORMATO","PIAZZA DI PORTA SAN GIOVANNI METRO A"],"541":["FILLIA","MALATESTA METRO C"],"657":["VIGNALI/SCINTU","ARCO DI TRAVERTINO METRO A"],"235":["LABIA","BRESSANONE"],"040":["FADDA","STAZIONE PONTE MAMMOLO METRO B"],"505":["STAZIONE METRO ANAGNINA METRO A",""],"041":["ALBA ADRIATICA/BARISCIANO","STAZIONE PONTE MAMMOLO METRO B"],"445":["CURIONI","BOLOGNA"],"503":["STAZIONE METRO ANAGNINA METRO A",""],"441":["STAZIONE TIBURTINA METRO B","CASALE ROCCHI"],"502":["CARNEVALE","CINECITTA' METRO A"],"349":["PORRO LAMBERTENGHI",""],"444":["BONIFACIO","STAZIONE PONTE MAMMOLO METRO B"],"041F":["FADDA","STAZIONE PONTE MAMMOLO METRO B"],"533":["ANAGNINA METRO A","ANAGNINA METRO A"],"339":["PORRO LAMBERTENGHI",""],"660":["ARCO DI TRAVERTINO METRO A",""],"C8":["CIMITERO LAURENTINO","BALDELLI METRO B"],"665":["PIAZZA SAN GIOVANNI IN LATERANO",""],"040F":["ALBA ADRIATICA/BARISCIANO","STAZIONE PONTE MAMMOLO METRO B"]};
+
+    // Sottoinsieme dello schema gtfs-realtime.proto necessario per i TripUpdates.
+    const GTFS_RT_PROTO = `
+      syntax = "proto2";
+      package transit_realtime;
+      message FeedMessage { required FeedHeader header = 1; repeated FeedEntity entity = 2; }
+      message FeedHeader { required string gtfs_realtime_version = 1; optional uint64 timestamp = 3; }
+      message FeedEntity { required string id = 1; optional bool is_deleted = 2; optional TripUpdate trip_update = 3; }
+      message TripUpdate {
+        required TripDescriptor trip = 1;
+        optional VehicleDescriptor vehicle = 3;
+        repeated StopTimeUpdate stop_time_update = 2;
+        optional uint64 timestamp = 4;
+        optional int32 delay = 5;
+        message StopTimeEvent { optional int32 delay = 1; optional int64 time = 2; optional int32 uncertainty = 3; }
+        message StopTimeUpdate {
+          optional uint32 stop_sequence = 1;
+          optional string stop_id = 4;
+          optional StopTimeEvent arrival = 2;
+          optional StopTimeEvent departure = 3;
+          optional uint32 schedule_relationship = 5;
+        }
+      }
+      message TripDescriptor {
+        optional string trip_id = 1; optional string route_id = 5; optional uint32 direction_id = 6;
+        optional string start_time = 2; optional string start_date = 3; optional uint32 schedule_relationship = 4;
+      }
+      message VehicleDescriptor { optional string id = 1; optional string label = 2; optional string license_plate = 3; }
+    `;
+    const FeedMessage = protobuf.parse(GTFS_RT_PROTO, { keepCase: true }).root.lookupType("transit_realtime.FeedMessage");
+
+    // ---- UI refs --------------------------------------------------------------
+    const $ = (id) => document.getElementById(id);
+    const stopInput = $('stopCode');
+    const lineInput = $('lineFilter');
+    const proxyInput = $('customProxy');
+    const btn = $('refreshBtn');
+    const status = $('status');
+    const table = $('table');
+    const lastUpdate = $('lastUpdate');
+    const stopMeta = $('stopMeta');
+    const proxyInfo = $('proxyInfo');
+    const autoButtons = document.querySelectorAll('button[data-interval]');
+    const autoInfo = $('autoInfo');
+
+    let autoTimer = null;
+    let autoMs = 0;
+    let thresholds = { red: 1, yellow: 3, orange: 10 };
+    let loading = false;
+    const stopNames = {}; // cache codice -> nome palina
+
+    function setStatus(text, kind = "info") {
+      status.textContent = text;
+      status.className = "small";
+      if (kind !== "info") status.classList.add(kind, "badge");
+    }
+
+    // ---- Download feed tramite proxy -----------------------------------------
+    function proxyCandidates() {
+      const custom = proxyInput.value.trim();
+      if (custom) return [{ name: "personalizzato", tpl: custom.includes('{') ? custom : custom + '{url}' }];
+      // Metti per primo l'ultimo proxy che ha funzionato
+      const last = localStorage.getItem('gtfsLastProxy');
+      return [...PROXIES].sort((a, b) => (b.name === last) - (a.name === last));
+    }
+
+    async function fetchFeedBytes() {
+      // Cache-buster: evita che il proxy restituisca una copia vecchia
+      const raw = `${FEED_URL}?t=${Date.now()}`;
+      const errors = [];
+      for (const p of proxyCandidates()) {
+        const url = p.tpl.replace('{url}', encodeURIComponent(raw)).replace('{raw}', raw);
+        try {
+          const ctrl = new AbortController();
+          const timer = setTimeout(() => ctrl.abort(), 20000);
+          const res = await fetch(url, { cache: "no-store", signal: ctrl.signal });
+          clearTimeout(timer);
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const bytes = new Uint8Array(await res.arrayBuffer());
+          // Un feed valido inizia con il campo header (tag 0x0a) e pesa più di qualche KB
+          if (bytes.length < 1000 || bytes[0] !== 0x0a) throw new Error("risposta non valida");
+          localStorage.setItem('gtfsLastProxy', p.name);
+          proxyInfo.textContent = p.name;
+          return bytes;
+        } catch (e) {
+          errors.push(`${p.name}: ${e.name === 'AbortError' ? 'timeout' : e.message}`);
+        }
+      }
+      proxyInfo.textContent = "nessuno disponibile";
+      throw new Error("Tutti i proxy hanno fallito → " + errors.join(" | "));
+    }
+
+    // ---- Elaborazione ------------------------------------------------------
+    function extractArrivals(feed, stopCodes, lineFilter) {
+      const nowSec = Date.now() / 1000;
+      const byStop = Object.fromEntries(stopCodes.map(c => [c, []]));
+      for (const ent of feed.entity) {
+        const tu = ent.trip_update;
+        if (!tu || ent.is_deleted) continue;
+        const trip = tu.trip || {};
+        const route = trip.route_id || '?';
+        if (lineFilter.length && !lineFilter.includes(route.toUpperCase())) continue;
+        for (const stu of tu.stop_time_update) {
+          if (!(stu.stop_id in byStop)) continue;
+          if (stu.schedule_relationship === 1) continue; // SKIPPED
+          const ev = (stu.arrival && Number(stu.arrival.time)) ? stu.arrival : stu.departure;
+          const t = ev ? Number(ev.time) : 0;
+          if (!t || t < nowSec - 30) continue; // già passato
+          const dir = trip.direction_id || 0;
+          byStop[stu.stop_id].push({
+            line: route,
+            dest: (HEADSIGNS[route] && HEADSIGNS[route][dir]) || '',
+            time: t,
+            seconds: t - nowSec,
+            delay: ev.delay,
+            vehicle: tu.vehicle ? (tu.vehicle.label || tu.vehicle.id) : '',
+            tripId: trip.trip_id || '',
+            startTime: trip.start_time || ''
+          });
+        }
+      }
+      for (const c of stopCodes) byStop[c].sort((a, b) => a.time - b.time);
+      return byStop;
+    }
+
+    // Nome palina dall'API ATAC (che ha CORS aperto); se non risponde si mostra solo il codice
+    async function loadStopName(code) {
+      if (stopNames[code]) return;
+      try {
+        const res = await fetch(ATAC_STOP_INFO + encodeURIComponent(code), { cache: "force-cache" });
+        const data = await res.json();
+        const s = data && data.stopsinfo && data.stopsinfo[0];
+        if (s && s.name) stopNames[code] = s.name;
+      } catch { /* non bloccante */ }
+    }
+
+    // ---- Rendering ----------------------------------------------------------
+    function renderHeader() {
+      for (const label of ["Linea", "Destinazione", "Arrivo"]) {
+        const div = document.createElement('div');
+        div.className = 'th';
+        div.setAttribute('role', 'columnheader');
+        div.textContent = label;
+        table.appendChild(div);
+      }
+    }
+
+    function badgeFromMinutes(m) {
+      const span = document.createElement('span');
+      span.className = 'badge';
+      span.textContent = m === 0 ? "In arrivo" : `${m} min`;
+      if (m <= thresholds.red) span.classList.add('err');
+      else if (m <= thresholds.yellow) span.classList.add('warn2');
+      else if (m <= thresholds.orange) span.classList.add('warn');
+      else span.classList.add('ok');
+      return span;
+    }
+
+    function renderEmpty(message = "Nessun arrivo previsto al momento") {
+      table.innerHTML = "";
+      renderHeader();
+      const empty = document.createElement('div');
+      empty.className = 'td empty';
+      empty.textContent = message;
+      empty.style.gridColumn = '1 / -1';
+      table.appendChild(empty);
+    }
+
+    const stopLabel = (c) => stopNames[c] ? `${stopNames[c]} [${c}]` : `Palina ${c}`;
+
+    function renderData(byStop) {
+      table.innerHTML = "";
+      renderHeader();
+      const codes = Object.keys(byStop);
+      let total = 0;
+      for (const code of codes) {
+        const list = byStop[code];
+        if (codes.length > 1) {
+          const sep = document.createElement('div');
+          sep.className = 'stop-separator';
+          sep.textContent = stopLabel(code) + (list.length ? '' : ' – nessun arrivo');
+          table.appendChild(sep);
+        }
+        for (const r of list) {
+          const open = () => showDetails(r);
+          const cells = [
+            Object.assign(document.createElement('div'), { className: 'td' }),
+            Object.assign(document.createElement('div'), { className: 'td', textContent: r.dest || '—' }),
+            Object.assign(document.createElement('div'), { className: 'td arrival-cell' })
+          ];
+          const strong = document.createElement('strong');
+          strong.textContent = r.line;
+          cells[0].appendChild(strong);
+          cells[2].appendChild(badgeFromMinutes(Math.max(0, Math.round(r.seconds / 60))));
+          for (const c of cells) { c.onclick = open; table.appendChild(c); }
+        }
+        total += list.length;
+      }
+      if (total === 0 && codes.length <= 1) renderEmpty();
+      stopMeta.textContent = codes.map(stopLabel).join(' • ');
+    }
+
+    let lastFocus = null;
+    function showDetails(r) {
+      lastFocus = document.activeElement;
+      const m = Math.max(0, Math.round(r.seconds / 60));
+      $('detailLine').textContent = r.line;
+      $('detailDest').textContent = r.dest || '—';
+      $('detailArrival').textContent = m === 0 ? 'In arrivo' : `${m} minuti`;
+      $('detailClock').textContent = new Date(r.time * 1000).toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' });
+      $('detailDelay').textContent = (typeof r.delay === 'number')
+        ? (r.delay === 0 ? 'In orario' : `${r.delay > 0 ? '+' : '−'}${Math.round(Math.abs(r.delay) / 60)} min`)
+        : '—';
+      $('detailVehicle').textContent = r.vehicle || '—';
+      $('detailTrip').textContent = r.startTime ? `partenza ${r.startTime.slice(0, 5)} (${r.tripId})` : (r.tripId || '—');
+      $('detailModal').classList.add('show');
+      $('modalClose').focus();
+    }
+
+    function closeModal() {
+      $('detailModal').classList.remove('show');
+      if (lastFocus) lastFocus.focus();
+    }
+
+    // ---- Ciclo principale -------------------------------------------------------
+    const parseList = (v) => v.split(',').map(s => s.trim()).filter(Boolean);
+
+    async function fetchArrivals() {
+      if (loading) return;
+      const codes = parseList(stopInput.value);
+      if (!codes.length) { setStatus("Inserisci un codice palina", "warn"); return; }
+      const lines = parseList(lineInput.value).map(s => s.toUpperCase());
+
+      loading = true;
+      btn.disabled = true;
+      setStatus("Caricamento…");
+      try {
+        const [bytes] = await Promise.all([fetchFeedBytes(), ...codes.map(loadStopName)]);
+        const feed = FeedMessage.toObject(FeedMessage.decode(bytes), { longs: Number, defaults: false, arrays: true });
+        renderData(extractArrivals(feed, codes, lines));
+        const feedTs = feed.header && feed.header.timestamp ? new Date(feed.header.timestamp * 1000) : new Date();
+        lastUpdate.textContent = feedTs.toLocaleString('it-IT');
+        setStatus("Aggiornato", "ok");
+      } catch (err) {
+        console.error(err);
+        setStatus("Impossibile recuperare i dati", "err");
+        renderEmpty("Impossibile recuperare i dati (vedi console)");
+      } finally {
+        loading = false;
+        btn.disabled = false;
+      }
+    }
+
+    function setAutoRefresh(ms) {
+      autoMs = ms;
+      autoInfo.textContent = ms > 0 ? `${Math.round(ms / 1000)}s` : 'disattivato';
+      autoButtons.forEach(b => b.classList.toggle('auto', Number(b.dataset.interval) === ms));
+      if (autoTimer) clearInterval(autoTimer);
+      autoTimer = ms > 0 ? setInterval(fetchArrivals, ms) : null;
+      localStorage.setItem('gtfsAutoRefreshMs', ms);
+    }
+
+    // ---- Eventi ----------------------------------------------------------------
+    for (const [id, key, def] of [['thresholdRed', 'red', 1], ['thresholdYellow', 'yellow', 3], ['thresholdOrange', 'orange', 10]]) {
+      const el = $(id);
+      thresholds[key] = parseInt(localStorage.getItem(id)) || def;
+      el.value = thresholds[key];
+      el.addEventListener('change', () => {
+        thresholds[key] = parseInt(el.value) || def;
+        localStorage.setItem(id, thresholds[key]);
+      });
+    }
+
+    const toggleControls = () => {
+      const open = $('controlsToggle').classList.toggle('open');
+      $('controlsPanel').classList.toggle('open', open);
+      $('controlsToggle').setAttribute('aria-expanded', open);
+    };
+    $('controlsToggle').addEventListener('click', toggleControls);
+    $('controlsToggle').addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleControls(); } });
+
+    $('modalClose').addEventListener('click', closeModal);
+    $('detailModal').addEventListener('click', (e) => { if (e.target.id === 'detailModal') closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    btn.addEventListener('click', fetchArrivals);
+    for (const [el, key] of [[stopInput, 'gtfsStopCodes'], [lineInput, 'gtfsLineFilter'], [proxyInput, 'gtfsCustomProxy']]) {
+      const saved = localStorage.getItem(key);
+      if (saved !== null) el.value = saved;
+      el.addEventListener('keydown', (e) => { if (e.key === 'Enter') { localStorage.setItem(key, el.value.trim()); fetchArrivals(); } });
+      el.addEventListener('blur', () => localStorage.setItem(key, el.value.trim()));
+    }
+    autoButtons.forEach(b => b.addEventListener('click', () => { setAutoRefresh(Number(b.dataset.interval)); fetchArrivals(); }));
+
+    const savedAutoMs = parseInt(localStorage.getItem('gtfsAutoRefreshMs'));
+    setAutoRefresh(isNaN(savedAutoMs) ? 0 : savedAutoMs);
+    fetchArrivals();
+  </script>
+</body>
+
+</html>
