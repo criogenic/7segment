@@ -1,0 +1,31 @@
+name: proxy-test
+on: workflow_dispatch
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test CORS proxies (curl)
+        run: |
+          FEED="https://romamobilita.it/sites/default/files/rome_rtgtfs_trip_updates_feed.pb?t=$(date +%s)"
+          ENC=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1],safe=''))" "$FEED")
+          for P in "diretto|$FEED" "corsproxy.io|https://corsproxy.io/?url=$ENC" "allorigins|https://api.allorigins.win/raw?url=$ENC" "codetabs|https://api.codetabs.com/v1/proxy?quest=$FEED" "cors.eu.org|https://cors.eu.org/$FEED"; do
+            N="${P%%|*}"; U="${P#*|}"
+            rm -f /tmp/f.pb /tmp/h.txt; touch /tmp/f.pb /tmp/h.txt
+            OUT=$(curl -s -o /tmp/f.pb -D /tmp/h.txt -w '%{http_code} size=%{size_download} t=%{time_total}' -m 30 -H 'Origin: https://criogenic.github.io' "$U" || echo "curl-fail")
+            ACAO=$(grep -i '^access-control-allow-origin' /tmp/h.txt | tr -d '\r' | head -1)
+            FIRST=$(head -c 2 /tmp/f.pb | xxd -p)
+            echo "RESULT_PROXY $N => $OUT first=$FIRST $ACAO"
+          done
+      - name: Load published page in headless Chrome
+        run: |
+          google-chrome --headless=new --no-sandbox --disable-gpu --virtual-time-budget=45000 --dump-dom "https://criogenic.github.io/7segment/Atac708_gtfs.html?nocache=$(date +%s)" > dom.html 2>/dev/null || true
+          python3 - <<'EOF'
+          import re
+          d = open('dom.html', encoding='utf-8').read()
+          def g(p):
+              m = re.search(p, d, re.S)
+              return re.sub(r'\s+', ' ', re.sub(r'<[^>]+>', ' ', m.group(1))).strip() if m else '?'
+          print('RESULT_STATUS', g(r'id="status"[^>]*>(.*?)</span>'))
+          print('RESULT_PROXYINUSO', g(r'id="proxyInfo">(.*?)</span>'))
+          print('RESULT_TABELLA', g(r'id="table"[^>]*>(.*?)<div class="controls-toggle"'))
+          EOF
